@@ -1,6 +1,30 @@
 # Donation Database
 
-React component for the North Star House donor database UI.
+React app for the North Star House donor and sponsor database UI.
+
+## Local development
+
+1) Install dependencies
+
+```
+npm install
+```
+
+2) Run the dev server
+
+```
+npm run dev
+```
+
+## GitHub Pages
+
+The site is deployed to GitHub Pages from the `main` branch.
+Once GitHub Actions finishes, visit:
+
+https://northstarhouse.github.io/donation-database/
 
 ## Files
-- `donor_database.tsx`: Main component.
+
+- `src/DonorDatabase.tsx`: Main component.
+- `src/main.tsx`: App entry point.
+- `vite.config.ts`: Vite config with Pages base path.
