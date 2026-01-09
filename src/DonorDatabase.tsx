@@ -188,14 +188,14 @@ const DonorDatabase = () => {
     <div style={{ 
       minHeight: '100vh', 
       background: '#F7F2E9',
-      fontFamily: '"Manrope", "Segoe UI", sans-serif'
+      fontFamily: '"Helvetica Neue", Arial, sans-serif'
     }}>
       <div style={{ 
         background: '#8B6B45',
         padding: '2.25rem 2.5rem',
         color: 'white'
       }}>
-        <h1 style={{ margin: 0, fontSize: '2.35rem', fontWeight: '600', letterSpacing: '0.2px', fontFamily: '"Cormorant Garamond", "Times New Roman", serif' }}>North Star House Donor Database</h1>
+        <h1 style={{ margin: 0, fontSize: '2.35rem', fontWeight: '600', letterSpacing: '0.2px', fontFamily: '"Helvetica Neue", Arial, sans-serif' }}>North Star House Donor Database</h1>
         <div style={{ 
           display: 'flex', 
           gap: '1rem', 
@@ -797,7 +797,7 @@ const headerStyle = {
   fontSize: '0.8rem',
   textTransform: 'uppercase',
   color: '#8B6B45',
-  fontFamily: '"Manrope", "Segoe UI", sans-serif',
+  fontFamily: '"Helvetica Neue", Arial, sans-serif',
   fontWeight: '700',
   letterSpacing: '0.05em',
   background: '#F7F2E9'
@@ -916,7 +916,7 @@ const detailTitleStyle = {
   margin: '0 0 1rem 0',
   color: '#8B6B45',
   fontSize: '1.1rem',
-  fontFamily: '"Cormorant Garamond", "Times New Roman", serif'
+  fontFamily: '"Helvetica Neue", Arial, sans-serif'
 };
 
 const detailGridStyle = {
