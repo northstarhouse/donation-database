@@ -195,7 +195,7 @@ const DonorDatabase = () => {
         padding: '2.25rem 2.5rem',
         color: 'white'
       }}>
-        <h1 style={{ margin: 0, fontSize: '2.35rem', fontWeight: '600', letterSpacing: '0.2px', fontFamily: '"Helvetica Neue", Arial, sans-serif' }}>North Star House Donor Database</h1>
+        <h1 style={{ margin: 0, fontSize: '2.35rem', fontWeight: '700', letterSpacing: '0.2px', fontFamily: '"Cormorant Garamond", "Times New Roman", serif' }}>North Star House Donor Database</h1>
         <div style={{ 
           display: 'flex', 
           gap: '1rem', 
