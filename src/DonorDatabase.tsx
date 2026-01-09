@@ -164,6 +164,20 @@ const DonorDatabase = () => {
   const accountTypes = ['Individual', 'Family', 'Corporate', 'Foundation', 'Government'];
 
   const normalizeHeader = (value) => value.toString().trim().toLowerCase().replace(/\s+/g, ' ');
+  const formatDisplayDate = (value) => {
+    if (!value) return '';
+    if (value instanceof Date && !isNaN(value)) {
+      return value.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    if (typeof value === 'string') {
+      const parsed = new Date(value);
+      if (!isNaN(parsed)) {
+        return parsed.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      }
+      return value;
+    }
+    return '';
+  };
   const buildRowForSheet = (headers, dataMap) => {
     const row = {};
     headers.forEach((header) => {
@@ -591,22 +605,19 @@ const DonorDatabase = () => {
                     <>
                       <td style={cellStyle}>
                         <div style={{ fontWeight: '500', color: '#8B6B45' }}>{item.donorName}</div>
-                        {item.informalName && (
-                          <div style={{ fontSize: '0.875rem', color: '#666' }}>({item.informalName})</div>
-                        )}
                       </td>
                       <td style={cellStyle}>
                         <span style={{ fontWeight: '600' }}>
                           ${item.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                         </span>
                       </td>
-                      <td style={cellStyle}>{item.closeDate}</td>
+                      <td style={cellStyle}>{formatDisplayDate(item.closeDate)}</td>
                       <td style={cellStyle}>{item.donationType}</td>
                       <td style={cellStyle}>{item.paymentType}</td>
                       <td style={cellStyle}>
                         {item.acknowledged ? (
                           <span style={{ color: '#2E7D32', fontWeight: '600' }}>
-                            Yes{item.acknowledgedDate ? ` (${item.acknowledgedDate})` : ''}
+                            Yes{item.acknowledgedDate ? ` (${formatDisplayDate(item.acknowledgedDate)})` : ''}
                           </span>
                         ) : (
                           <span style={{ color: '#9A8C7C' }}>Pending</span>
@@ -624,7 +635,7 @@ const DonorDatabase = () => {
                       <td style={cellStyle}>{item.phoneNumber}</td>
                       <td style={cellStyle}>{item.emailAddress}</td>
                       <td style={cellStyle}>{item.mailingAddress}</td>
-                      <td style={cellStyle}>{item.dateReceived}</td>
+                      <td style={cellStyle}>{formatDisplayDate(item.dateReceived)}</td>
                       <td style={cellStyle}>
                         {item.acknowledged ? (
                           <span style={{ color: '#2E7D32', fontWeight: '600' }}>Yes</span>
@@ -832,9 +843,6 @@ const DonorDatabase = () => {
               <div style={modalHeaderStyle}>
                 <div>
                   <h2 style={{ margin: 0, color: '#8B6B45' }}>{selectedDonor}</h2>
-                  {donorInfo.informalName && (
-                    <p style={{ margin: '0.25rem 0 0 0', color: '#7A6A58' }}>({donorInfo.informalName})</p>
-                  )}
                 </div>
                 <button onClick={() => setSelectedDonor(null)} style={closeButtonStyle}>
                   <X size={24} color="#6E5B44" />
@@ -884,7 +892,7 @@ const DonorDatabase = () => {
                     {donorDonations.map((donation) => (
                       <div key={donation.id} style={detailItemRowStyle}>
                         <div>
-                          <div style={{ fontWeight: '600' }}>{donation.closeDate}</div>
+                          <div style={{ fontWeight: '600' }}>{formatDisplayDate(donation.closeDate)}</div>
                           <div style={{ fontSize: '0.85rem', color: '#7A6A58' }}>
                             {donation.donationType} - {donation.paymentType}
                           </div>
