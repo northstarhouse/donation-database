@@ -187,34 +187,33 @@ const DonorDatabase = () => {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      background: '#FAF8F3',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      background: '#F7F2E9',
+      fontFamily: '"Trebuchet MS", "Segoe UI", sans-serif'
     }}>
       <div style={{ 
-        background: 'linear-gradient(135deg, #886c44 0%, #a88b65 100%)',
-        padding: '2rem',
-        color: 'white',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        background: '#8B6B45',
+        padding: '2.25rem 2.5rem',
+        color: 'white'
       }}>
-        <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: '600' }}>North Star House Donor Database</h1>
+        <h1 style={{ margin: 0, fontSize: '2.35rem', fontWeight: '600', letterSpacing: '0.2px' }}>North Star House Donor Database</h1>
         <div style={{ 
           display: 'flex', 
-          gap: '0.75rem', 
-          marginTop: '1rem',
+          gap: '1rem', 
+          marginTop: '1.5rem',
           flexWrap: 'wrap'
         }}>
           <button
             onClick={() => setActiveTab('2026-donations')}
             style={{
-              background: activeTab === '2026-donations' ? 'white' : 'rgba(255,255,255,0.2)',
-              color: activeTab === '2026-donations' ? '#886c44' : 'white',
+              background: activeTab === '2026-donations' ? 'white' : '#A48763',
+              color: activeTab === '2026-donations' ? '#8B6B45' : 'white',
               border: 'none',
-              padding: '0.5rem 1.25rem',
-              borderRadius: '6px',
-              fontSize: '0.95rem',
+              padding: '0.65rem 1.6rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
               cursor: 'pointer',
               fontWeight: '600',
-              transition: 'all 0.2s'
+              boxShadow: activeTab === '2026-donations' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none'
             }}
           >
             2026 Donations
@@ -222,15 +221,15 @@ const DonorDatabase = () => {
           <button
             onClick={() => setActiveTab('2025-donations')}
             style={{
-              background: activeTab === '2025-donations' ? 'white' : 'rgba(255,255,255,0.2)',
-              color: activeTab === '2025-donations' ? '#886c44' : 'white',
+              background: activeTab === '2025-donations' ? 'white' : '#A48763',
+              color: activeTab === '2025-donations' ? '#8B6B45' : 'white',
               border: 'none',
-              padding: '0.5rem 1.25rem',
-              borderRadius: '6px',
-              fontSize: '0.95rem',
+              padding: '0.65rem 1.6rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
               cursor: 'pointer',
               fontWeight: '600',
-              transition: 'all 0.2s'
+              boxShadow: activeTab === '2025-donations' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none'
             }}
           >
             2025 Donations
@@ -238,15 +237,15 @@ const DonorDatabase = () => {
           <button
             onClick={() => setActiveTab('2026-sponsors')}
             style={{
-              background: activeTab === '2026-sponsors' ? 'white' : 'rgba(255,255,255,0.2)',
-              color: activeTab === '2026-sponsors' ? '#886c44' : 'white',
+              background: activeTab === '2026-sponsors' ? 'white' : '#A48763',
+              color: activeTab === '2026-sponsors' ? '#8B6B45' : 'white',
               border: 'none',
-              padding: '0.5rem 1.25rem',
-              borderRadius: '6px',
-              fontSize: '0.95rem',
+              padding: '0.65rem 1.6rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
               cursor: 'pointer',
               fontWeight: '600',
-              transition: 'all 0.2s'
+              boxShadow: activeTab === '2026-sponsors' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none'
             }}
           >
             2026 Sponsors
@@ -254,15 +253,15 @@ const DonorDatabase = () => {
           <button
             onClick={() => setActiveTab('2025-sponsors')}
             style={{
-              background: activeTab === '2025-sponsors' ? 'white' : 'rgba(255,255,255,0.2)',
-              color: activeTab === '2025-sponsors' ? '#886c44' : 'white',
+              background: activeTab === '2025-sponsors' ? 'white' : '#A48763',
+              color: activeTab === '2025-sponsors' ? '#8B6B45' : 'white',
               border: 'none',
-              padding: '0.5rem 1.25rem',
-              borderRadius: '6px',
-              fontSize: '0.95rem',
+              padding: '0.65rem 1.6rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
               cursor: 'pointer',
               fontWeight: '600',
-              transition: 'all 0.2s'
+              boxShadow: activeTab === '2025-sponsors' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none'
             }}
           >
             2025 Sponsors
@@ -272,25 +271,25 @@ const DonorDatabase = () => {
 
       <div style={{ 
         background: 'white',
-        padding: '1.5rem 2rem',
-        borderBottom: '1px solid #E5E5E5',
+        padding: '2rem 2.5rem',
+        borderBottom: '1px solid #E3DBD0',
         display: 'flex',
-        gap: '3rem',
+        gap: '4rem',
         alignItems: 'center'
       }}>
         {!isSponsorsView && (
           <>
             <div>
-              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>
+              <div style={{ fontSize: '0.95rem', color: '#7A6A58', marginBottom: '0.4rem' }}>
                 Total {activeTab.includes('2026') ? '2026' : '2025'} Donations
               </div>
-              <div style={{ fontSize: '1.75rem', fontWeight: '600', color: '#886c44' }}>
+              <div style={{ fontSize: '2rem', fontWeight: '600', color: '#8B6B45' }}>
                 ${currentTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>Number of Donations</div>
-              <div style={{ fontSize: '1.75rem', fontWeight: '600', color: '#886c44' }}>
+              <div style={{ fontSize: '0.95rem', color: '#7A6A58', marginBottom: '0.4rem' }}>Number of Donations</div>
+              <div style={{ fontSize: '2rem', fontWeight: '600', color: '#8B6B45' }}>
                 {currentData.length}
               </div>
             </div>
@@ -298,30 +297,30 @@ const DonorDatabase = () => {
         )}
         {isSponsorsView && (
           <div>
-            <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.25rem' }}>
+            <div style={{ fontSize: '0.95rem', color: '#7A6A58', marginBottom: '0.4rem' }}>
               Total {activeTab.includes('2026') ? '2026' : '2025'} Sponsors
             </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '600', color: '#886c44' }}>
+            <div style={{ fontSize: '2rem', fontWeight: '600', color: '#8B6B45' }}>
               {currentData.length}
             </div>
           </div>
         )}
       </div>
 
-      <div style={{ padding: '2rem' }}>
+      <div style={{ padding: '2.5rem' }}>
         <div style={{ 
           display: 'flex', 
-          gap: '1rem', 
-          marginBottom: '2rem',
+          gap: '1.5rem', 
+          marginBottom: '2.5rem',
           alignItems: 'center'
         }}>
-          <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+          <div style={{ position: 'relative', flex: 1, maxWidth: '520px' }}>
             <Search size={20} style={{ 
               position: 'absolute', 
-              left: '1rem', 
+              left: '1.1rem', 
               top: '50%', 
               transform: 'translateY(-50%)',
-              color: '#999'
+              color: '#9A8C7C'
             }} />
             <input
               type="text"
@@ -330,27 +329,30 @@ const DonorDatabase = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
                 width: '100%',
-                padding: '0.75rem 1rem 0.75rem 3rem',
-                border: '1px solid #DDD',
-                borderRadius: '8px',
-                fontSize: '1rem'
+                padding: '0.85rem 1rem 0.85rem 3rem',
+                border: '1px solid #E3DBD0',
+                borderRadius: '12px',
+                fontSize: '1rem',
+                background: 'white',
+                color: '#3F3226'
               }}
             />
           </div>
           <button
             onClick={() => isSponsorsView ? setShowSponsorForm(true) : setShowDonationForm(true)}
             style={{
-              background: '#886c44',
+              background: '#8B6B45',
               color: 'white',
               border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '8px',
-              fontSize: '1rem',
+              padding: '0.85rem 1.6rem',
+              borderRadius: '12px',
+              fontSize: '1.05rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              fontWeight: '500'
+              fontWeight: '600',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)'
             }}
           >
             <Plus size={20} />
@@ -360,13 +362,13 @@ const DonorDatabase = () => {
 
         <div style={{ 
           background: 'white',
-          borderRadius: '12px',
+          borderRadius: '16px',
           overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+          boxShadow: '0 1px 6px rgba(0,0,0,0.08)'
         }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#F5F5F5' }}>
+              <tr style={{ background: '#F7F2E9' }}>
                 {!isSponsorsView ? (
                   <>
                     <th style={headerStyle}>Donor Name</th>
@@ -380,9 +382,14 @@ const DonorDatabase = () => {
                   <>
                     <th style={headerStyle}>Business Name</th>
                     <th style={headerStyle}>Main Contact</th>
+                    <th style={headerStyle}>Donation Fair Market Value</th>
                     <th style={headerStyle}>Area Supported</th>
+                    <th style={headerStyle}>Phone Number</th>
+                    <th style={headerStyle}>Email Address</th>
+                    <th style={headerStyle}>Mailing Address</th>
                     <th style={headerStyle}>Date Received</th>
                     <th style={headerStyle}>Acknowledged</th>
+                    <th style={headerStyle}>Notes</th>
                     <th style={headerStyle}>NSH Contact</th>
                   </>
                 )}
@@ -397,14 +404,14 @@ const DonorDatabase = () => {
                     cursor: 'pointer',
                     transition: 'background 0.2s'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = '#FAFAFA'}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#F7F2E9'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
                   onClick={() => isSponsorsView ? setSelectedSponsor(item.businessName) : setSelectedDonor(item.donorName)}
                 >
                   {!isSponsorsView ? (
                     <>
                       <td style={cellStyle}>
-                        <div style={{ fontWeight: '500', color: '#886c44' }}>{item.donorName}</div>
+                        <div style={{ fontWeight: '500', color: '#8B6B45' }}>{item.donorName}</div>
                         {item.informalName && (
                           <div style={{ fontSize: '0.875rem', color: '#666' }}>({item.informalName})</div>
                         )}
@@ -419,27 +426,34 @@ const DonorDatabase = () => {
                       <td style={cellStyle}>{item.paymentType}</td>
                       <td style={cellStyle}>
                         {item.acknowledged ? (
-                          <span style={{ color: '#28A745' }}>✓ {item.acknowledgedDate}</span>
+                          <span style={{ color: '#2E7D32', fontWeight: '600' }}>
+                            Yes{item.acknowledgedDate ? ` (${item.acknowledgedDate})` : ''}
+                          </span>
                         ) : (
-                          <span style={{ color: '#999' }}>Pending</span>
+                          <span style={{ color: '#9A8C7C' }}>Pending</span>
                         )}
                       </td>
                     </>
                   ) : (
                     <>
                       <td style={cellStyle}>
-                        <div style={{ fontWeight: '500', color: '#886c44' }}>{item.businessName}</div>
+                        <div style={{ fontWeight: '500', color: '#8B6B45' }}>{item.businessName}</div>
                       </td>
                       <td style={cellStyle}>{item.mainContact}</td>
+                      <td style={cellStyle}>{item.donationFMV}</td>
                       <td style={cellStyle}>{item.areaSupported}</td>
+                      <td style={cellStyle}>{item.phoneNumber}</td>
+                      <td style={cellStyle}>{item.emailAddress}</td>
+                      <td style={cellStyle}>{item.mailingAddress}</td>
                       <td style={cellStyle}>{item.dateReceived}</td>
                       <td style={cellStyle}>
                         {item.acknowledged ? (
-                          <span style={{ color: '#28A745' }}>✓</span>
+                          <span style={{ color: '#2E7D32', fontWeight: '600' }}>Yes</span>
                         ) : (
-                          <span style={{ color: '#999' }}>Pending</span>
+                          <span style={{ color: '#9A8C7C' }}>Pending</span>
                         )}
                       </td>
+                      <td style={cellStyle}>{item.notes}</td>
                       <td style={cellStyle}>{item.nshContact}</td>
                     </>
                   )}
@@ -448,7 +462,7 @@ const DonorDatabase = () => {
             </tbody>
           </table>
           {filteredData.length === 0 && (
-            <div style={{ padding: '3rem', textAlign: 'center', color: '#999' }}>
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#9A8C7C' }}>
               No {isSponsorsView ? 'sponsors' : 'donations'} found for {activeTab.includes('2026') ? '2026' : '2025'}
             </div>
           )}
@@ -460,7 +474,7 @@ const DonorDatabase = () => {
         <div style={modalOverlayStyle}>
           <div style={modalStyle}>
             <div style={modalHeaderStyle}>
-              <h2 style={{ margin: 0, color: '#886c44' }}>Add New Donation</h2>
+              <h2 style={{ margin: 0, color: '#8B6B45' }}>Add New Donation</h2>
               <button onClick={() => setShowDonationForm(false)} style={closeButtonStyle}>
                 <X size={24} color="#666" />
               </button>
@@ -555,7 +569,7 @@ const DonorDatabase = () => {
         <div style={modalOverlayStyle}>
           <div style={modalStyle}>
             <div style={modalHeaderStyle}>
-              <h2 style={{ margin: 0, color: '#886c44' }}>Add New Sponsor</h2>
+              <h2 style={{ margin: 0, color: '#8B6B45' }}>Add New Sponsor</h2>
               <button onClick={() => setShowSponsorForm(false)} style={closeButtonStyle}>
                 <X size={24} color="#666" />
               </button>
@@ -628,25 +642,299 @@ const DonorDatabase = () => {
             <div style={modalStyle}>
               <div style={modalHeaderStyle}>
                 <div>
-                  <h2 style={{ margin: 0, color: '#886c44' }}>{selectedDonor}</h2>
+                  <h2 style={{ margin: 0, color: '#8B6B45' }}>{selectedDonor}</h2>
                   {donorInfo.informalName && (
-                    <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>({donorInfo.informalName})</p>
+                    <p style={{ margin: '0.25rem 0 0 0', color: '#7A6A58' }}>({donorInfo.informalName})</p>
                   )}
                 </div>
                 <button onClick={() => setSelectedDonor(null)} style={closeButtonStyle}>
-                  <X size={24} color="#666" />
+                  <X size={24} color="#6E5B44" />
                 </button>
               </div>
               
               <div style={{ padding: '1.5rem' }}>
-                <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                  <h3 style={{ margin: '0 0 1rem 0', color: '#886c44', fontSize: '1.125rem' }}>Contact Information</h3>
-                  <div style={{ display: 'grid', gap: '0.75rem' }}>
+                <div style={detailCardStyle}>
+                  <h3 style={detailTitleStyle}>Contact Information</h3>
+                  <div style={detailGridStyle}>
                     {donorInfo.email && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Mail size={18} color="#886c44" />
+                      <div style={detailRowStyle}>
+                        <Mail size={18} color="#8B6B45" />
                         <span>{donorInfo.email}</span>
                       </div>
                     )}
                     {donorInfo.phone && (
-                      <div style={{ display: 'flex', alignItems: 'center
+                      <div style={detailRowStyle}>
+                        <Phone size={18} color="#8B6B45" />
+                        <span>{donorInfo.phone}</span>
+                      </div>
+                    )}
+                    {donorInfo.address && (
+                      <div style={detailRowStyle}>
+                        <MapPin size={18} color="#8B6B45" />
+                        <span>{donorInfo.address}</span>
+                      </div>
+                    )}
+                    {donorInfo.accountType && (
+                      <div style={detailRowStyle}>
+                        <Building2 size={18} color="#8B6B45" />
+                        <span>{donorInfo.accountType}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={detailCardStyle}>
+                  <h3 style={detailTitleStyle}>Donation History</h3>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', color: '#6E5B44', fontSize: '0.95rem' }}>
+                    <span>Total</span>
+                    <span style={{ fontWeight: '600', color: '#8B6B45' }}>
+                      ${total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gap: '0.5rem' }}>
+                    {donorDonations.map((donation) => (
+                      <div key={donation.id} style={detailItemRowStyle}>
+                        <div>
+                          <div style={{ fontWeight: '600' }}>{donation.closeDate}</div>
+                          <div style={{ fontSize: '0.85rem', color: '#7A6A58' }}>
+                            {donation.donationType} - {donation.paymentType}
+                          </div>
+                        </div>
+                        <div style={{ fontWeight: '600' }}>
+                          ${donation.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Sponsor Detail Modal */}
+      {selectedSponsor && (() => {
+        const sponsorHistory = getSponsorHistory(selectedSponsor);
+        const sponsorInfo = sponsorHistory[0];
+
+        return (
+          <div style={modalOverlayStyle}>
+            <div style={modalStyle}>
+              <div style={modalHeaderStyle}>
+                <div>
+                  <h2 style={{ margin: 0, color: '#8B6B45' }}>{selectedSponsor}</h2>
+                  {sponsorInfo.mainContact && (
+                    <p style={{ margin: '0.25rem 0 0 0', color: '#7A6A58' }}>{sponsorInfo.mainContact}</p>
+                  )}
+                </div>
+                <button onClick={() => setSelectedSponsor(null)} style={closeButtonStyle}>
+                  <X size={24} color="#6E5B44" />
+                </button>
+              </div>
+              
+              <div style={{ padding: '1.5rem' }}>
+                <div style={detailCardStyle}>
+                  <h3 style={detailTitleStyle}>Contact Information</h3>
+                  <div style={detailGridStyle}>
+                    {sponsorInfo.emailAddress && (
+                      <div style={detailRowStyle}>
+                        <Mail size={18} color="#8B6B45" />
+                        <span>{sponsorInfo.emailAddress}</span>
+                      </div>
+                    )}
+                    {sponsorInfo.phoneNumber && (
+                      <div style={detailRowStyle}>
+                        <Phone size={18} color="#8B6B45" />
+                        <span>{sponsorInfo.phoneNumber}</span>
+                      </div>
+                    )}
+                    {sponsorInfo.mailingAddress && (
+                      <div style={detailRowStyle}>
+                        <MapPin size={18} color="#8B6B45" />
+                        <span>{sponsorInfo.mailingAddress}</span>
+                      </div>
+                    )}
+                    {sponsorInfo.areaSupported && (
+                      <div style={detailRowStyle}>
+                        <Building2 size={18} color="#8B6B45" />
+                        <span>{sponsorInfo.areaSupported}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={detailCardStyle}>
+                  <h3 style={detailTitleStyle}>Sponsorship History</h3>
+                  <div style={{ display: 'grid', gap: '0.5rem' }}>
+                    {sponsorHistory.map((sponsor) => (
+                      <div key={sponsor.id} style={detailItemRowStyle}>
+                        <div>
+                          <div style={{ fontWeight: '600' }}>{sponsor.dateReceived}</div>
+                          <div style={{ fontSize: '0.85rem', color: '#7A6A58' }}>
+                            {sponsor.areaSupported || 'General'} - {sponsor.nshContact || 'NSH'}
+                          </div>
+                        </div>
+                        <div style={{ fontWeight: '600' }}>
+                          {sponsor.donationFMV || 'In-kind'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+    </div>
+  );
+};
+
+const headerStyle = {
+  textAlign: 'left',
+  padding: '1rem 1.25rem',
+  fontSize: '0.8rem',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: '#8B6B45',
+  background: '#F7F2E9'
+};
+
+const cellStyle = {
+  padding: '1rem 1.25rem',
+  fontSize: '0.95rem',
+  color: '#3F3226'
+};
+
+const modalOverlayStyle = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'rgba(60, 48, 36, 0.45)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1000,
+  padding: '1.5rem'
+};
+
+const modalStyle = {
+  background: '#FDFBF7',
+  borderRadius: '16px',
+  width: '100%',
+  maxWidth: '720px',
+  maxHeight: '85vh',
+  overflowY: 'auto',
+  boxShadow: '0 24px 60px rgba(0,0,0,0.25)'
+};
+
+const modalHeaderStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '1.25rem 1.5rem',
+  borderBottom: '1px solid #E3DBD0',
+  background: '#F7F2E9'
+};
+
+const closeButtonStyle = {
+  background: 'transparent',
+  border: 'none',
+  cursor: 'pointer',
+  padding: 0
+};
+
+const formGridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+  gap: '1rem'
+};
+
+const formGroupStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.5rem'
+};
+
+const labelStyle = {
+  fontSize: '0.85rem',
+  fontWeight: '600',
+  color: '#6E5B44'
+};
+
+const inputStyle = {
+  padding: '0.65rem 0.75rem',
+  border: '1px solid #E3DBD0',
+  borderRadius: '8px',
+  fontSize: '0.95rem',
+  fontFamily: 'inherit',
+  background: 'white',
+  color: '#3F3226'
+};
+
+const formButtonsStyle = {
+  display: 'flex',
+  justifyContent: 'flex-end',
+  gap: '0.75rem',
+  marginTop: '1.5rem'
+};
+
+const cancelButtonStyle = {
+  background: '#EFE7DC',
+  border: 'none',
+  color: '#6E5B44',
+  padding: '0.65rem 1.3rem',
+  borderRadius: '10px',
+  fontWeight: '600',
+  cursor: 'pointer'
+};
+
+const submitButtonStyle = {
+  background: '#8B6B45',
+  border: 'none',
+  color: 'white',
+  padding: '0.7rem 1.3rem',
+  borderRadius: '10px',
+  fontWeight: '600',
+  cursor: 'pointer'
+};
+
+const detailCardStyle = {
+  background: 'white',
+  padding: '1.5rem',
+  borderRadius: '12px',
+  marginBottom: '1.5rem',
+  border: '1px solid #F0E7DC'
+};
+
+const detailTitleStyle = {
+  margin: '0 0 1rem 0',
+  color: '#8B6B45',
+  fontSize: '1.1rem'
+};
+
+const detailGridStyle = {
+  display: 'grid',
+  gap: '0.75rem'
+};
+
+const detailRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '0.65rem',
+  color: '#3F3226'
+};
+
+const detailItemRowStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  padding: '0.6rem 0',
+  borderBottom: '1px solid #EFE7DC'
+};
+
+export default DonorDatabase;
+
+
