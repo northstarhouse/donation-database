@@ -18,8 +18,8 @@ npm run dev
 
 ## GitHub Pages
 
-The site is deployed to GitHub Pages from the `main` branch.
-Once GitHub Actions finishes, visit:
+The site is deployed from the `docs/` folder on the `main` branch.
+Visit:
 
 https://northstarhouse.github.io/donation-database/
 
