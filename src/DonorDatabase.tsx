@@ -795,11 +795,11 @@ const headerStyle = {
   textAlign: 'left',
   padding: '1rem 1.25rem',
   fontSize: '0.8rem',
-  letterSpacing: '0.08em',
   textTransform: 'uppercase',
   color: '#8B6B45',
-  fontFamily: '"Cormorant Garamond", "Times New Roman", serif',
-  fontWeight: '600',
+  fontFamily: '"Manrope", "Segoe UI", sans-serif',
+  fontWeight: '700',
+  letterSpacing: '0.05em',
   background: '#F7F2E9'
 };
 
