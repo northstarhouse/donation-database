@@ -188,7 +188,7 @@ const DonorDatabase = () => {
     <div style={{ 
       minHeight: '100vh', 
       background: '#F7F2E9',
-      fontFamily: '"Manrope", "Segoe UI", sans-serif'
+      fontFamily: '"Cormorant Garamond", "Times New Roman", serif'
     }}>
       <div style={{ 
         background: '#8B6B45',
@@ -798,7 +798,7 @@ const headerStyle = {
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   color: '#8B6B45',
-  fontFamily: '"Space Grotesk", "Segoe UI", sans-serif',
+  fontFamily: '"Cormorant Garamond", "Times New Roman", serif',
   fontWeight: '600',
   background: '#F7F2E9'
 };
