@@ -353,11 +353,17 @@ const DonorDatabase = () => {
     if (activeTab.includes('donations')) {
       return (item.donorName && item.donorName.toLowerCase().includes(searchLower)) ||
              (item.email && item.email.toLowerCase().includes(searchLower)) ||
-             (item.informalName && item.informalName.toLowerCase().includes(searchLower));
+             (item.informalName && item.informalName.toLowerCase().includes(searchLower)) ||
+             (item.donationType && item.donationType.toLowerCase().includes(searchLower)) ||
+             (item.paymentType && item.paymentType.toLowerCase().includes(searchLower)) ||
+             (item.notes && item.notes.toLowerCase().includes(searchLower));
     } else {
       return (item.businessName && item.businessName.toLowerCase().includes(searchLower)) ||
              (item.mainContact && item.mainContact.toLowerCase().includes(searchLower)) ||
-             (item.emailAddress && item.emailAddress.toLowerCase().includes(searchLower));
+             (item.emailAddress && item.emailAddress.toLowerCase().includes(searchLower)) ||
+             (item.areaSupported && item.areaSupported.toLowerCase().includes(searchLower)) ||
+             (item.donationFMV && item.donationFMV.toLowerCase().includes(searchLower)) ||
+             (item.notes && item.notes.toLowerCase().includes(searchLower));
     }
   });
 
@@ -593,7 +599,7 @@ const DonorDatabase = () => {
                 <tr 
                   key={item.id}
                   style={{ 
-                    borderBottom: '1px solid #F0F0F0',
+                    borderBottom: '2px solid #E6DDD2',
                     cursor: 'pointer',
                     transition: 'background 0.2s'
                   }}
@@ -896,6 +902,11 @@ const DonorDatabase = () => {
                           <div style={{ fontSize: '0.85rem', color: '#7A6A58' }}>
                             {donation.donationType} - {donation.paymentType}
                           </div>
+                          {donation.notes && (
+                            <div style={{ fontSize: '0.85rem', color: '#6E5B44', marginTop: '0.35rem' }}>
+                              Notes: {donation.notes}
+                            </div>
+                          )}
                         </div>
                         <div style={{ fontWeight: '600' }}>
                           ${donation.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -967,10 +978,15 @@ const DonorDatabase = () => {
                     {sponsorHistory.map((sponsor) => (
                       <div key={sponsor.id} style={detailItemRowStyle}>
                         <div>
-                          <div style={{ fontWeight: '600' }}>{sponsor.dateReceived}</div>
+                          <div style={{ fontWeight: '600' }}>{formatDisplayDate(sponsor.dateReceived)}</div>
                           <div style={{ fontSize: '0.85rem', color: '#7A6A58' }}>
                             {sponsor.areaSupported || 'General'} - {sponsor.nshContact || 'NSH'}
                           </div>
+                          {sponsor.notes && (
+                            <div style={{ fontSize: '0.85rem', color: '#6E5B44', marginTop: '0.35rem' }}>
+                              Notes: {sponsor.notes}
+                            </div>
+                          )}
                         </div>
                         <div style={{ fontWeight: '600' }}>
                           {sponsor.donationFMV || 'In-kind'}
