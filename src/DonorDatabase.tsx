@@ -15,6 +15,7 @@ const DonorDatabase = () => {
   const [selectedDonor, setSelectedDonor] = useState(null);
   const [selectedSponsor, setSelectedSponsor] = useState(null);
   const [activeTab, setActiveTab] = useState('2026-donations');
+  const [matchedDonorNotice, setMatchedDonorNotice] = useState('');
   
   const [donationFormData, setDonationFormData] = useState({
     donorName: '',
@@ -336,6 +337,48 @@ const DonorDatabase = () => {
       [name]: type === 'checkbox' ? checked : value
     }));
   };
+
+  useEffect(() => {
+    if (!showDonationForm) {
+      setMatchedDonorNotice('');
+      return;
+    }
+    const donorName = donationFormData.donorName.trim();
+    const email = donationFormData.email.trim();
+    if (!donorName || !email) {
+      setMatchedDonorNotice('');
+      return;
+    }
+
+    const matches = donations.filter(d => {
+      const nameMatch = d.donorName && d.donorName.toLowerCase() === donorName.toLowerCase();
+      const emailMatch = d.email && d.email.toLowerCase() === email.toLowerCase();
+      return nameMatch && emailMatch;
+    });
+
+    if (matches.length === 0) {
+      setMatchedDonorNotice('');
+      return;
+    }
+
+    const sortedMatches = [...matches].sort((a, b) => {
+      if (a.closeDate && b.closeDate) {
+        return new Date(b.closeDate) - new Date(a.closeDate);
+      }
+      return (b.id || 0) - (a.id || 0);
+    });
+    const latest = sortedMatches[0];
+
+    setDonationFormData(prev => ({
+      ...prev,
+      address: prev.address || latest.address || '',
+      phone: prev.phone || latest.phone || '',
+      informalName: prev.informalName || latest.informalName || '',
+      lastName: prev.lastName || latest.lastName || '',
+      accountType: prev.accountType || latest.accountType || ''
+    }));
+    setMatchedDonorNotice('Previous donor found - contact details were filled in.');
+  }, [donationFormData.donorName, donationFormData.email, donations, showDonationForm]);
 
   const donations2026 = donations.filter(d => d.year === '2026');
   const donations2025 = donations.filter(d => d.year === '2025');
@@ -686,6 +729,11 @@ const DonorDatabase = () => {
               </button>
             </div>
             <div style={{ padding: '1.5rem' }}>
+              {matchedDonorNotice && (
+                <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#F7F2E9', borderRadius: '10px', color: '#6E5B44' }}>
+                  {matchedDonorNotice}
+                </div>
+              )}
               <div style={formGridStyle}>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Donor Name *</label>
