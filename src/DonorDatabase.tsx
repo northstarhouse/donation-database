@@ -797,7 +797,7 @@ const headerStyle = {
   fontSize: '0.8rem',
   textTransform: 'uppercase',
   color: '#8B6B45',
-  fontFamily: '"Helvetica Neue", Arial, sans-serif',
+  fontFamily: '"Cormorant Garamond", "Times New Roman", serif',
   fontWeight: '700',
   letterSpacing: '0.05em',
   background: '#F7F2E9'
