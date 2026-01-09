@@ -420,10 +420,24 @@ const DonorDatabase = () => {
     }
   });
 
-  const getDonorHistory = (donorName) => {
-    const donorDonations = donations.filter(d => d.donorName === donorName);
-    const total = donorDonations.reduce((sum, d) => sum + d.amount, 0);
-    return { donations: donorDonations, total };
+  const getDonorHistory = (donorName, donorEmail) => {
+    const normalizeValue = (value) => (value || '').toString().trim().toLowerCase();
+    const nameKey = normalizeValue(donorName);
+    const emailKey = normalizeValue(donorEmail);
+    const donorDonations = donations.filter(d => {
+      const nameMatch = normalizeValue(d.donorName) === nameKey;
+      if (!nameMatch) return false;
+      if (!emailKey) return true;
+      return normalizeValue(d.email) === emailKey;
+    });
+    const sortedDonations = [...donorDonations].sort((a, b) => {
+      if (a.closeDate && b.closeDate) {
+        return new Date(b.closeDate) - new Date(a.closeDate);
+      }
+      return (b.id || 0) - (a.id || 0);
+    });
+    const total = sortedDonations.reduce((sum, d) => sum + (d.amount || 0), 0);
+    return { donations: sortedDonations, total };
   };
 
   const getSponsorHistory = (businessName) => {
@@ -674,7 +688,7 @@ const DonorDatabase = () => {
                   }}
                   onMouseEnter={(e) => e.currentTarget.style.background = '#F7F2E9'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
-                  onClick={() => isSponsorsView ? setSelectedSponsor(item.businessName) : setSelectedDonor(item.donorName)}
+                  onClick={() => isSponsorsView ? setSelectedSponsor(item.businessName) : setSelectedDonor({ name: item.donorName, email: item.email || '' })}
                 >
                   {!isSponsorsView ? (
                     <>
@@ -914,15 +928,19 @@ const DonorDatabase = () => {
 
       {/* Donor Detail Modal */}
       {selectedDonor && (() => {
-        const { donations: donorDonations, total } = getDonorHistory(selectedDonor);
+        const { donations: donorDonations, total } = getDonorHistory(selectedDonor.name, selectedDonor.email);
         const donorInfo = donorDonations[0];
+
+        if (!donorInfo) {
+          return null;
+        }
         
         return (
           <div style={modalOverlayStyle}>
             <div style={modalStyle}>
               <div style={modalHeaderStyle}>
                 <div>
-                  <h2 style={{ margin: 0, color: '#8B6B45' }}>{selectedDonor}</h2>
+                  <h2 style={{ margin: 0, color: '#8B6B45' }}>{selectedDonor.name}</h2>
                 </div>
                 <button onClick={() => setSelectedDonor(null)} style={closeButtonStyle}>
                   <X size={24} color="#6E5B44" />
