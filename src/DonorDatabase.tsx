@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, X, Mail, Phone, MapPin, Building2 } from 'lucide-react';
 
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxknvigF90NbBe86zrXT6JvRlaDQmvsuYuRYCfOOLISwtzDO3X7hH5TIDH7ALemwCWy/exec';
+
 const DonorDatabase = () => {
   const [donations, setDonations] = useState([]);
   const [sponsors, setSponsors] = useState([]);
+  const [sheetHeaders, setSheetHeaders] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [showDonationForm, setShowDonationForm] = useState(false);
   const [showSponsorForm, setShowSponsorForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,42 +49,188 @@ const DonorDatabase = () => {
   });
 
   useEffect(() => {
-    const savedDonations = localStorage.getItem('nsh_donations');
-    const savedSponsors = localStorage.getItem('nsh_sponsors');
-    if (savedDonations) setDonations(JSON.parse(savedDonations));
-    if (savedSponsors) setSponsors(JSON.parse(savedSponsors));
+    const normalizeHeader = (value) => value.toString().trim().toLowerCase().replace(/\s+/g, ' ');
+    const toBoolean = (value) => {
+      if (typeof value === 'boolean') return value;
+      if (typeof value === 'number') return value !== 0;
+      if (!value) return false;
+      const normalized = value.toString().trim().toLowerCase();
+      return ['true', 'yes', 'y', '1'].includes(normalized);
+    };
+    const normalizeDate = (value) => {
+      if (!value) return '';
+      if (value instanceof Date && !isNaN(value)) return value.toISOString().slice(0, 10);
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return '';
+        if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) return trimmed.slice(0, 10);
+        const parsed = new Date(trimmed);
+        if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
+      }
+      return '';
+    };
+
+    const mapDonationRow = (row, year, index) => {
+      const rowMap = {};
+      Object.keys(row || {}).forEach((key) => {
+        rowMap[normalizeHeader(key)] = row[key];
+      });
+      const amountValue = parseFloat(rowMap['amount']);
+      return {
+        id: `donation-${year}-${index}`,
+        year,
+        donorName: rowMap['donor name'] || '',
+        amount: Number.isFinite(amountValue) ? amountValue : 0,
+        closeDate: normalizeDate(rowMap['close date']),
+        donationType: rowMap['donation type'] || '',
+        paymentType: rowMap['payment type'] || '',
+        notes: rowMap['notes'] || '',
+        benefits: rowMap['benefits'] || '',
+        acknowledged: toBoolean(rowMap['acknowledged']),
+        acknowledgedDate: normalizeDate(rowMap['acknowledged date']),
+        accountType: rowMap['account type'] || '',
+        address: rowMap['address'] || '',
+        email: rowMap['email'] || '',
+        phone: rowMap['phone number'] || rowMap['phone'] || '',
+        informalName: rowMap['informal names'] || rowMap['informal name'] || '',
+        lastName: rowMap['last name'] || ''
+      };
+    };
+
+    const mapSponsorRow = (row, year, index) => {
+      const rowMap = {};
+      Object.keys(row || {}).forEach((key) => {
+        rowMap[normalizeHeader(key)] = row[key];
+      });
+      return {
+        id: `sponsor-${year}-${index}`,
+        year,
+        businessName: rowMap['business name'] || '',
+        mainContact: rowMap['main contact'] || '',
+        donationFMV: rowMap['fair market value'] || rowMap['donation'] || '',
+        areaSupported: rowMap['area supported'] || '',
+        phoneNumber: rowMap['phone number'] || '',
+        emailAddress: rowMap['email address'] || '',
+        mailingAddress: rowMap['mailing address'] || '',
+        dateReceived: normalizeDate(rowMap['date received'] || rowMap['date recieved']),
+        acknowledged: toBoolean(rowMap['acknowledged']),
+        notes: rowMap['notes'] || '',
+        nshContact: rowMap['nsh contact'] || ''
+      };
+    };
+
+    const loadSheetData = async () => {
+      try {
+        setLoading(true);
+        setLoadError('');
+        const response = await fetch(SCRIPT_URL);
+        if (!response.ok) {
+          throw new Error(`Failed to load sheet data (${response.status})`);
+        }
+        const payload = await response.json();
+        const headersByName = {};
+        const donationRows = [];
+        const sponsorRows = [];
+        (payload.sheets || []).forEach((sheet) => {
+          const sheetName = sheet.name || '';
+          headersByName[sheetName] = sheet.headers || [];
+          const yearMatch = sheetName.match(/(20\d{2})/);
+          const year = yearMatch ? yearMatch[1] : '';
+          if (/donations/i.test(sheetName)) {
+            (sheet.rows || []).forEach((row, index) => {
+              donationRows.push(mapDonationRow(row, year, donationRows.length + index));
+            });
+          } else if (/sponsors/i.test(sheetName)) {
+            (sheet.rows || []).forEach((row, index) => {
+              sponsorRows.push(mapSponsorRow(row, year, sponsorRows.length + index));
+            });
+          }
+        });
+        setSheetHeaders(headersByName);
+        setDonations(donationRows);
+        setSponsors(sponsorRows);
+      } catch (error) {
+        setLoadError(error.message || 'Failed to load data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSheetData();
   }, []);
-
-  useEffect(() => {
-    if (donations.length > 0) {
-      localStorage.setItem('nsh_donations', JSON.stringify(donations));
-    }
-  }, [donations]);
-
-  useEffect(() => {
-    if (sponsors.length > 0) {
-      localStorage.setItem('nsh_sponsors', JSON.stringify(sponsors));
-    }
-  }, [sponsors]);
 
   const donationTypes = ['Annual Fund', 'Capital Campaign', 'In-Kind', 'Event Sponsorship', 'General', 'Grant', 'Memorial'];
   const paymentTypes = ['Check', 'Cash', 'Credit Card', 'Venmo', 'PayPal', 'Stock/Securities', 'Wire Transfer'];
   const accountTypes = ['Individual', 'Family', 'Corporate', 'Foundation', 'Government'];
 
-  const handleDonationSubmit = () => {
+  const normalizeHeader = (value) => value.toString().trim().toLowerCase().replace(/\s+/g, ' ');
+  const buildRowForSheet = (headers, dataMap) => {
+    const row = {};
+    headers.forEach((header) => {
+      const key = normalizeHeader(header);
+      row[header] = dataMap[key] ?? '';
+    });
+    return row;
+  };
+
+  const postRow = async (sheetName, row) => {
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sheet: sheetName, row })
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to write to ${sheetName}`);
+    }
+  };
+
+  const handleDonationSubmit = async () => {
     if (!donationFormData.donorName || !donationFormData.amount || !donationFormData.closeDate || !donationFormData.donationType || !donationFormData.paymentType || !donationFormData.accountType) {
       alert('Please fill in all required fields');
       return;
     }
+
+    const targetSheet = activeTab.includes('2026') ? '2026 Donations' : '2025 Donations';
+    const headers = sheetHeaders[targetSheet] || [];
+    const dataMap = {
+      'donor name': donationFormData.donorName,
+      'amount': donationFormData.amount,
+      'close date': donationFormData.closeDate,
+      'donation type': donationFormData.donationType,
+      'payment type': donationFormData.paymentType,
+      'notes': donationFormData.notes,
+      'benefits': donationFormData.benefits,
+      'salesforce': '',
+      'acknowledged': donationFormData.acknowledged,
+      'acknowledged date': donationFormData.acknowledgedDate,
+      'account type': donationFormData.accountType,
+      'address': donationFormData.address,
+      'email': donationFormData.email,
+      'phone number': donationFormData.phone,
+      'phone': donationFormData.phone,
+      'informal names': donationFormData.informalName,
+      'informal name': donationFormData.informalName,
+      'last name': donationFormData.lastName
+    };
     
     const newDonation = {
       ...donationFormData,
       id: Date.now(),
+      year: activeTab.includes('2026') ? '2026' : '2025',
       amount: parseFloat(donationFormData.amount),
       closeDate: donationFormData.closeDate,
       acknowledgedDate: donationFormData.acknowledged ? donationFormData.acknowledgedDate : ''
     };
-    setDonations([...donations, newDonation]);
+    try {
+      if (headers.length > 0) {
+        const row = buildRowForSheet(headers, dataMap);
+        await postRow(targetSheet, row);
+      }
+      setDonations([...donations, newDonation]);
+    } catch (error) {
+      alert('Failed to save donation to the spreadsheet.');
+      return;
+    }
     setDonationFormData({
       donorName: '',
       amount: '',
@@ -100,18 +251,46 @@ const DonorDatabase = () => {
     setShowDonationForm(false);
   };
 
-  const handleSponsorSubmit = () => {
+  const handleSponsorSubmit = async () => {
     if (!sponsorFormData.businessName || !sponsorFormData.dateReceived) {
       alert('Please fill in Business Name and Date Received');
       return;
     }
-    
+
+    const targetSheet = activeTab.includes('2026') ? '2026 Sponsors' : '2025 Sponsors';
+    const headers = sheetHeaders[targetSheet] || [];
+    const dataMap = {
+      'business name': sponsorFormData.businessName,
+      'main contact': sponsorFormData.mainContact,
+      'donation': '',
+      'fair market value': sponsorFormData.donationFMV,
+      'area supported': sponsorFormData.areaSupported,
+      'phone number': sponsorFormData.phoneNumber,
+      'email address': sponsorFormData.emailAddress,
+      'mailing address': sponsorFormData.mailingAddress,
+      'date received': sponsorFormData.dateReceived,
+      'date recieved': sponsorFormData.dateReceived,
+      'acknowledged': sponsorFormData.acknowledged,
+      'notes': sponsorFormData.notes,
+      'nsh contact': sponsorFormData.nshContact
+    };
+
     const newSponsor = {
       ...sponsorFormData,
       id: Date.now(),
+      year: activeTab.includes('2026') ? '2026' : '2025',
       dateReceived: sponsorFormData.dateReceived
     };
-    setSponsors([...sponsors, newSponsor]);
+    try {
+      if (headers.length > 0) {
+        const row = buildRowForSheet(headers, dataMap);
+        await postRow(targetSheet, row);
+      }
+      setSponsors([...sponsors, newSponsor]);
+    } catch (error) {
+      alert('Failed to save sponsor to the spreadsheet.');
+      return;
+    }
     setSponsorFormData({
       businessName: '',
       mainContact: '',
@@ -144,10 +323,10 @@ const DonorDatabase = () => {
     }));
   };
 
-  const donations2026 = donations.filter(d => d.closeDate && d.closeDate.startsWith('2026'));
-  const donations2025 = donations.filter(d => d.closeDate && d.closeDate.startsWith('2025'));
-  const sponsors2026 = sponsors.filter(s => s.dateReceived && s.dateReceived.startsWith('2026'));
-  const sponsors2025 = sponsors.filter(s => s.dateReceived && s.dateReceived.startsWith('2025'));
+  const donations2026 = donations.filter(d => d.year === '2026');
+  const donations2025 = donations.filter(d => d.year === '2025');
+  const sponsors2026 = sponsors.filter(s => s.year === '2026');
+  const sponsors2025 = sponsors.filter(s => s.year === '2025');
 
   let currentData = [];
   if (activeTab === '2026-donations') currentData = donations2026;
@@ -179,7 +358,7 @@ const DonorDatabase = () => {
   };
 
   const currentTotal = activeTab.includes('donations') 
-    ? currentData.reduce((sum, d) => sum + d.amount, 0) 
+    ? currentData.reduce((sum, d) => sum + (d.amount || 0), 0) 
     : 0;
 
   const isSponsorsView = activeTab.includes('sponsors');
@@ -461,7 +640,17 @@ const DonorDatabase = () => {
               ))}
             </tbody>
           </table>
-          {filteredData.length === 0 && (
+          {loading && (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#9A8C7C' }}>
+              Loading data...
+            </div>
+          )}
+          {!loading && loadError && (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#9A8C7C' }}>
+              {loadError}
+            </div>
+          )}
+          {!loading && !loadError && filteredData.length === 0 && (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#9A8C7C' }}>
               No {isSponsorsView ? 'sponsors' : 'donations'} found for {activeTab.includes('2026') ? '2026' : '2025'}
             </div>
