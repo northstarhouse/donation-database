@@ -798,6 +798,8 @@ const headerStyle = {
   letterSpacing: '0.08em',
   textTransform: 'uppercase',
   color: '#8B6B45',
+  fontFamily: '"Space Grotesk", "Segoe UI", sans-serif',
+  fontWeight: '600',
   background: '#F7F2E9'
 };
 
