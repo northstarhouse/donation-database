@@ -1262,6 +1262,11 @@ const DonorDatabase = () => {
                         <span>{donorInfo.accountType}</span>
                       </div>
                     )}
+                    {donorInfo.donorNotes && (
+                      <div style={{ fontSize: '0.9rem', color: '#6E5B44', marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
+                        Notes: {donorInfo.donorNotes}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div style={detailCardStyle}>
