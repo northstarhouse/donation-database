@@ -480,6 +480,7 @@ const DonorDatabase = () => {
     setEditingDonor({
       name: donor.donorName || '',
       email: donor.email || '',
+      originalEmail: donor.email || '',
       address: donor.address || '',
       phone: donor.phone || '',
       donorNotes: donor.donorNotes || ''
@@ -494,7 +495,8 @@ const DonorDatabase = () => {
       await postRow('ALL_DONATIONS', {}, {
         action: 'updateDonor',
         donorName: editingDonor.name,
-        donorEmail: editingDonor.email,
+        donorEmail: editingDonor.originalEmail,
+        donorEmailNew: editingDonor.email,
         updates: {
           address: editingDonor.address,
           phone: editingDonor.phone,
@@ -503,9 +505,15 @@ const DonorDatabase = () => {
       });
       setDonations(donations.map(d => {
         const nameMatch = (d.donorName || '').toLowerCase() === (editingDonor.name || '').toLowerCase();
-        const emailMatch = (d.email || '').toLowerCase() === (editingDonor.email || '').toLowerCase();
+        const emailMatch = (d.email || '').toLowerCase() === (editingDonor.originalEmail || '').toLowerCase();
         if (!nameMatch || !emailMatch) return d;
-        return { ...d, address: editingDonor.address, phone: editingDonor.phone, donorNotes: editingDonor.donorNotes };
+        return {
+          ...d,
+          email: editingDonor.email,
+          address: editingDonor.address,
+          phone: editingDonor.phone,
+          donorNotes: editingDonor.donorNotes
+        };
       }));
       setEditingDonor(null);
     } catch (error) {
@@ -841,9 +849,10 @@ const DonorDatabase = () => {
           display: 'flex', 
           gap: '1.5rem', 
           marginBottom: '2.5rem',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexWrap: 'wrap'
         }}>
-          <div style={{ position: 'relative', flex: 1, maxWidth: '520px' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '240px', maxWidth: '520px' }}>
             <Search size={20} style={{ 
               position: 'absolute', 
               left: '1.1rem', 
@@ -917,7 +926,8 @@ const DonorDatabase = () => {
           overflow: 'hidden',
           boxShadow: '0 1px 6px rgba(0,0,0,0.08)'
         }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+            <table style={{ width: '100%', minWidth: isSponsorsView ? '1100px' : '900px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#F7F2E9' }}>
                 {!isSponsorsView ? (
@@ -1008,7 +1018,8 @@ const DonorDatabase = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
           {loading && (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#9A8C7C' }}>
               Loading data...
@@ -1417,7 +1428,12 @@ const DonorDatabase = () => {
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Email</label>
-                  <input type="text" value={editingDonor.email} readOnly style={{ ...inputStyle, background: '#F7F2E9' }} />
+                  <input
+                    type="email"
+                    value={editingDonor.email}
+                    onChange={(e) => setEditingDonor({ ...editingDonor, email: e.target.value })}
+                    style={inputStyle}
+                  />
                 </div>
                 <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Address</label>
