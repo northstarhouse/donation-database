@@ -503,22 +503,6 @@ const DonorDatabase = () => {
             2025 Donations
           </button>
           <button
-            onClick={() => setActiveTab('all-donations')}
-            style={{
-              background: activeTab === 'all-donations' ? 'white' : '#A48763',
-              color: activeTab === 'all-donations' ? '#8B6B45' : 'white',
-              border: 'none',
-              padding: '0.65rem 1.6rem',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              fontWeight: '600',
-              boxShadow: activeTab === 'all-donations' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none'
-            }}
-          >
-            All Donations
-          </button>
-          <button
             onClick={() => setActiveTab('2024-donations')}
             style={{
               background: activeTab === '2024-donations' ? 'white' : '#A48763',
@@ -565,6 +549,22 @@ const DonorDatabase = () => {
             }}
           >
             2025 Sponsors
+          </button>
+          <button
+            onClick={() => setActiveTab('all-donations')}
+            style={{
+              background: activeTab === 'all-donations' ? 'white' : '#A48763',
+              color: activeTab === 'all-donations' ? '#8B6B45' : 'white',
+              border: 'none',
+              padding: '0.65rem 1.6rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              fontWeight: '600',
+              boxShadow: activeTab === 'all-donations' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none'
+            }}
+          >
+            All Donations
           </button>
         </div>
       </div>
