@@ -17,6 +17,7 @@ const DonorDatabase = () => {
   const [activeTab, setActiveTab] = useState('2026-donations');
   const [matchedDonorNotice, setMatchedDonorNotice] = useState('');
   const [segmentFilter, setSegmentFilter] = useState('all');
+  const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
   
   const [donationFormData, setDonationFormData] = useState({
     donorName: '',
@@ -370,6 +371,15 @@ const DonorDatabase = () => {
     }));
   };
 
+  const toggleSort = (key) => {
+    setSortConfig(prev => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
   useEffect(() => {
     if (!showDonationForm) {
       setMatchedDonorNotice('');
@@ -459,6 +469,25 @@ const DonorDatabase = () => {
              (item.donationFMV && item.donationFMV.toLowerCase().includes(searchLower)) ||
              (item.notes && item.notes.toLowerCase().includes(searchLower));
     }
+  });
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    const dir = sortConfig.direction === 'asc' ? 1 : -1;
+    const getValue = (item) => {
+      if (sortConfig.key === 'amount') return item.amount || 0;
+      if (sortConfig.key === 'closeDate' || sortConfig.key === 'dateReceived') {
+        const value = item[sortConfig.key];
+        return value ? new Date(value).getTime() : 0;
+      }
+      const value = item[sortConfig.key];
+      return value ? value.toString().toLowerCase() : '';
+    };
+    const aValue = getValue(a);
+    const bValue = getValue(b);
+    if (aValue < bValue) return -1 * dir;
+    if (aValue > bValue) return 1 * dir;
+    return 0;
   });
 
   const getDonorHistory = (donorName, donorEmail) => {
@@ -732,32 +761,32 @@ const DonorDatabase = () => {
               <tr style={{ background: '#F7F2E9' }}>
                 {!isSponsorsView ? (
                   <>
-                    <th style={headerStyle}>Donor Name</th>
-                    <th style={headerStyle}>Amount</th>
-                    <th style={headerStyle}>Date</th>
-                    <th style={headerStyle}>Type</th>
-                    <th style={headerStyle}>Payment</th>
+                    <th style={headerStyle} onClick={() => toggleSort('donorName')}>Donor Name</th>
+                    <th style={headerStyle} onClick={() => toggleSort('amount')}>Amount</th>
+                    <th style={headerStyle} onClick={() => toggleSort('closeDate')}>Date</th>
+                    <th style={headerStyle} onClick={() => toggleSort('donationType')}>Type</th>
+                    <th style={headerStyle} onClick={() => toggleSort('paymentType')}>Payment</th>
                     <th style={headerStyle}>Acknowledged</th>
                   </>
                 ) : (
                   <>
-                    <th style={headerStyle}>Business Name</th>
-                    <th style={headerStyle}>Main Contact</th>
-                    <th style={headerStyle}>Donation Fair Market Value</th>
-                    <th style={headerStyle}>Area Supported</th>
-                    <th style={headerStyle}>Phone Number</th>
-                    <th style={headerStyle}>Email Address</th>
-                    <th style={headerStyle}>Mailing Address</th>
-                    <th style={headerStyle}>Date Received</th>
+                    <th style={headerStyle} onClick={() => toggleSort('businessName')}>Business Name</th>
+                    <th style={headerStyle} onClick={() => toggleSort('mainContact')}>Main Contact</th>
+                    <th style={headerStyle} onClick={() => toggleSort('donationFMV')}>Donation Fair Market Value</th>
+                    <th style={headerStyle} onClick={() => toggleSort('areaSupported')}>Area Supported</th>
+                    <th style={headerStyle} onClick={() => toggleSort('phoneNumber')}>Phone Number</th>
+                    <th style={headerStyle} onClick={() => toggleSort('emailAddress')}>Email Address</th>
+                    <th style={headerStyle} onClick={() => toggleSort('mailingAddress')}>Mailing Address</th>
+                    <th style={headerStyle} onClick={() => toggleSort('dateReceived')}>Date Received</th>
                     <th style={headerStyle}>Acknowledged</th>
-                    <th style={headerStyle}>Notes</th>
-                    <th style={headerStyle}>NSH Contact</th>
+                    <th style={headerStyle} onClick={() => toggleSort('notes')}>Notes</th>
+                    <th style={headerStyle} onClick={() => toggleSort('nshContact')}>NSH Contact</th>
                   </>
                 )}
               </tr>
             </thead>
             <tbody>
-              {filteredData.map(item => (
+              {sortedData.map(item => (
                 <tr 
                   key={item.id}
                   style={{ 
@@ -1184,7 +1213,8 @@ const headerStyle = {
   fontFamily: '"Helvetica Neue", Arial, sans-serif',
   fontWeight: '700',
   letterSpacing: '0.05em',
-  background: '#F7F2E9'
+  background: '#F7F2E9',
+  cursor: 'pointer'
 };
 
 const cellStyle = {
