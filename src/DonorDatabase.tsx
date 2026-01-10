@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, X, Mail, Phone, MapPin, Building2 } from 'lucide-react';
 
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxknvigF90NbBe86zrXT6JvRlaDQmvsuYuRYCfOOLISwtzDO3X7hH5TIDH7ALemwCWy/exec';
@@ -16,6 +16,7 @@ const DonorDatabase = () => {
   const [selectedSponsor, setSelectedSponsor] = useState(null);
   const [activeTab, setActiveTab] = useState('2026-donations');
   const [matchedDonorNotice, setMatchedDonorNotice] = useState('');
+  const [segmentFilter, setSegmentFilter] = useState('all');
   
   const [donationFormData, setDonationFormData] = useState({
     donorName: '',
@@ -48,6 +49,29 @@ const DonorDatabase = () => {
     notes: '',
     nshContact: ''
   });
+
+  const donorSegments = useMemo(() => {
+    const normalizeValue = (value) => (value || '').toString().trim().toLowerCase();
+    const keyForDonation = (donation) => {
+      const nameKey = normalizeValue(donation.donorName);
+      const emailKey = normalizeValue(donation.email);
+      return emailKey ? `${nameKey}::${emailKey}` : nameKey;
+    };
+    const stats = new Map();
+    donations.forEach((donation) => {
+      const key = keyForDonation(donation);
+      if (!key) return;
+      const yearSet = stats.get(key)?.years || new Set();
+      yearSet.add(donation.year || '');
+      const existing = stats.get(key) || { count: 0, years: yearSet, hasMajor: false };
+      stats.set(key, {
+        count: existing.count + 1,
+        years: yearSet,
+        hasMajor: existing.hasMajor || (donation.amount || 0) > 500
+      });
+    });
+    return stats;
+  }, [donations]);
 
   useEffect(() => {
     const normalizeHeader = (value) => value.toString().trim().toLowerCase().replace(/\s+/g, ' ');
@@ -406,12 +430,28 @@ const DonorDatabase = () => {
   const filteredData = currentData.filter(item => {
     const searchLower = searchTerm.toLowerCase();
     if (activeTab.includes('donations')) {
-      return (item.donorName && item.donorName.toLowerCase().includes(searchLower)) ||
-             (item.email && item.email.toLowerCase().includes(searchLower)) ||
-             (item.informalName && item.informalName.toLowerCase().includes(searchLower)) ||
-             (item.donationType && item.donationType.toLowerCase().includes(searchLower)) ||
-             (item.paymentType && item.paymentType.toLowerCase().includes(searchLower)) ||
-             (item.notes && item.notes.toLowerCase().includes(searchLower));
+      const matchesSearch = (item.donorName && item.donorName.toLowerCase().includes(searchLower)) ||
+        (item.email && item.email.toLowerCase().includes(searchLower)) ||
+        (item.informalName && item.informalName.toLowerCase().includes(searchLower)) ||
+        (item.donationType && item.donationType.toLowerCase().includes(searchLower)) ||
+        (item.paymentType && item.paymentType.toLowerCase().includes(searchLower)) ||
+        (item.notes && item.notes.toLowerCase().includes(searchLower));
+
+      const key = (() => {
+        const nameKey = (item.donorName || '').toString().trim().toLowerCase();
+        const emailKey = (item.email || '').toString().trim().toLowerCase();
+        return emailKey ? `${nameKey}::${emailKey}` : nameKey;
+      })();
+      const stats = donorSegments.get(key);
+      const matchesSegment = (() => {
+        if (segmentFilter === 'all' || !stats) return true;
+        if (segmentFilter === 'new') return stats.count === 1;
+        if (segmentFilter === 'loyal') return stats.years.size >= 2;
+        if (segmentFilter === 'major') return stats.hasMajor;
+        return true;
+      })();
+
+      return matchesSearch && matchesSegment;
     } else {
       return (item.businessName && item.businessName.toLowerCase().includes(searchLower)) ||
              (item.mainContact && item.mainContact.toLowerCase().includes(searchLower)) ||
@@ -658,6 +698,28 @@ const DonorDatabase = () => {
             <Plus size={20} />
             {isSponsorsView ? 'Add Sponsor' : 'Add Donation'}
           </button>
+          {!isSponsorsView && (
+            <div style={{ minWidth: '220px' }}>
+              <select
+                value={segmentFilter}
+                onChange={(e) => setSegmentFilter(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.8rem 0.9rem',
+                  border: '1px solid #E3DBD0',
+                  borderRadius: '12px',
+                  fontSize: '0.95rem',
+                  background: 'white',
+                  color: '#3F3226'
+                }}
+              >
+                <option value="all">All Donors</option>
+                <option value="new">New Donors</option>
+                <option value="loyal">Loyal Donors</option>
+                <option value="major">Major Donors (over $500)</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div style={{ 
