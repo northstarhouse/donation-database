@@ -215,7 +215,6 @@ const DonorDatabase = () => {
   const postRow = async (sheetName, row) => {
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sheet: sheetName, row })
     });
     if (!response.ok) {
