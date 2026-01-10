@@ -205,9 +205,10 @@ const DonorDatabase = () => {
       return;
     }
 
-    const targetSheet = activeTab.includes('2026')
+    const closeYear = donationFormData.closeDate ? donationFormData.closeDate.slice(0, 4) : '';
+    const targetSheet = activeTab.includes('2026') || closeYear === '2026'
       ? '2026 Donations'
-      : activeTab.includes('2024')
+      : activeTab.includes('2024') || closeYear === '2024'
       ? '2024 Donations'
       : '2025 Donations';
     const headers = sheetHeaders[targetSheet] || [];
@@ -235,9 +236,9 @@ const DonorDatabase = () => {
     const newDonation = {
       ...donationFormData,
       id: Date.now(),
-      year: activeTab.includes('2026')
+      year: activeTab.includes('2026') || closeYear === '2026'
         ? '2026'
-        : activeTab.includes('2024')
+        : activeTab.includes('2024') || closeYear === '2024'
         ? '2024'
         : '2025',
       amount: parseFloat(donationFormData.amount),
@@ -398,6 +399,7 @@ const DonorDatabase = () => {
   if (activeTab === '2026-donations') currentData = donations2026;
   else if (activeTab === '2025-donations') currentData = donations2025;
   else if (activeTab === '2024-donations') currentData = donations2024;
+  else if (activeTab === 'all-donations') currentData = donations;
   else if (activeTab === '2026-sponsors') currentData = sponsors2026;
   else if (activeTab === '2025-sponsors') currentData = sponsors2025;
 
@@ -501,6 +503,22 @@ const DonorDatabase = () => {
             2025 Donations
           </button>
           <button
+            onClick={() => setActiveTab('all-donations')}
+            style={{
+              background: activeTab === 'all-donations' ? 'white' : '#A48763',
+              color: activeTab === 'all-donations' ? '#8B6B45' : 'white',
+              border: 'none',
+              padding: '0.65rem 1.6rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              fontWeight: '600',
+              boxShadow: activeTab === 'all-donations' ? '0 2px 6px rgba(0,0,0,0.12)' : 'none'
+            }}
+          >
+            All Donations
+          </button>
+          <button
             onClick={() => setActiveTab('2024-donations')}
             style={{
               background: activeTab === '2024-donations' ? 'white' : '#A48763',
@@ -563,7 +581,7 @@ const DonorDatabase = () => {
           <>
             <div>
               <div style={{ fontSize: '0.95rem', color: '#7A6A58', marginBottom: '0.4rem' }}>
-                Total {activeTab.includes('2026') ? '2026' : activeTab.includes('2024') ? '2024' : '2025'} Donations
+                Total {activeTab.includes('2026') ? '2026' : activeTab.includes('2024') ? '2024' : activeTab.includes('all') ? 'All' : '2025'} Donations
               </div>
               <div style={{ fontSize: '2rem', fontWeight: '600', color: '#8B6B45' }}>
                 ${currentTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
@@ -752,7 +770,7 @@ const DonorDatabase = () => {
           )}
           {!loading && !loadError && filteredData.length === 0 && (
             <div style={{ padding: '3rem', textAlign: 'center', color: '#9A8C7C' }}>
-              No {isSponsorsView ? 'sponsors' : 'donations'} found for {activeTab.includes('2026') ? '2026' : activeTab.includes('2024') ? '2024' : '2025'}
+              No {isSponsorsView ? 'sponsors' : 'donations'} found for {activeTab.includes('2026') ? '2026' : activeTab.includes('2024') ? '2024' : activeTab.includes('all') ? 'all years' : '2025'}
             </div>
           )}
         </div>
