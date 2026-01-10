@@ -17,7 +17,7 @@ const DonorDatabase = () => {
   const [activeTab, setActiveTab] = useState('2026-donations');
   const [matchedDonorNotice, setMatchedDonorNotice] = useState('');
   const [segmentFilter, setSegmentFilter] = useState('all');
-  const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'closeDate', direction: 'desc' });
   const [isSavingDonation, setIsSavingDonation] = useState(false);
   const [isSavingSponsor, setIsSavingSponsor] = useState(false);
   
@@ -187,7 +187,18 @@ const DonorDatabase = () => {
     loadSheetData();
   }, []);
 
-  const donationTypes = ['Annual Fund', 'Capital Campaign', 'In-Kind', 'Event Sponsorship', 'General', 'Grant', 'Memorial'];
+  const donationTypes = [
+    'Donation',
+    'Brick Purchase',
+    'Membership',
+    'Business Sponsorship',
+    'In-Kind',
+    'Tour Donation',
+    'Tribute',
+    'Annual Appeal',
+    'Grant',
+    'Restricted'
+  ];
   const paymentTypes = ['Check', 'Cash', 'Credit Card', 'Venmo', 'PayPal', 'Stock/Securities', 'Wire Transfer'];
   const accountTypes = ['Individual', 'Family', 'Corporate', 'Foundation', 'Government'];
 
@@ -391,6 +402,15 @@ const DonorDatabase = () => {
   };
 
   useEffect(() => {
+    if (activeTab.includes('donations') && sortConfig.key !== 'closeDate') {
+      setSortConfig({ key: 'closeDate', direction: 'desc' });
+    }
+    if (activeTab.includes('sponsors') && sortConfig.key !== 'dateReceived') {
+      setSortConfig({ key: 'dateReceived', direction: 'desc' });
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
     if (!showDonationForm) {
       setMatchedDonorNotice('');
       return;
@@ -497,7 +517,7 @@ const DonorDatabase = () => {
     const bValue = getValue(b);
     if (aValue < bValue) return -1 * dir;
     if (aValue > bValue) return 1 * dir;
-    return 0;
+    return (b.id || 0) - (a.id || 0);
   });
 
   const getDonorHistory = (donorName, donorEmail) => {
