@@ -18,6 +18,8 @@ const DonorDatabase = () => {
   const [matchedDonorNotice, setMatchedDonorNotice] = useState('');
   const [segmentFilter, setSegmentFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
+  const [isSavingDonation, setIsSavingDonation] = useState(false);
+  const [isSavingSponsor, setIsSavingSponsor] = useState(false);
   
   const [donationFormData, setDonationFormData] = useState({
     donorName: '',
@@ -224,6 +226,7 @@ const DonorDatabase = () => {
   };
 
   const handleDonationSubmit = async () => {
+    if (isSavingDonation) return;
     if (!donationFormData.donorName || !donationFormData.amount || !donationFormData.closeDate || !donationFormData.donationType || !donationFormData.paymentType || !donationFormData.accountType) {
       alert('Please fill in all required fields');
       return;
@@ -270,6 +273,7 @@ const DonorDatabase = () => {
       acknowledgedDate: donationFormData.acknowledged ? donationFormData.acknowledgedDate : ''
     };
     try {
+      setIsSavingDonation(true);
       if (headers.length > 0) {
         const row = buildRowForSheet(headers, dataMap);
         await postRow(targetSheet, row);
@@ -278,6 +282,8 @@ const DonorDatabase = () => {
     } catch (error) {
       alert('Failed to save donation to the spreadsheet.');
       return;
+    } finally {
+      setIsSavingDonation(false);
     }
     setDonationFormData({
       donorName: '',
@@ -300,6 +306,7 @@ const DonorDatabase = () => {
   };
 
   const handleSponsorSubmit = async () => {
+    if (isSavingSponsor) return;
     if (!sponsorFormData.businessName || !sponsorFormData.dateReceived) {
       alert('Please fill in Business Name and Date Received');
       return;
@@ -330,6 +337,7 @@ const DonorDatabase = () => {
       dateReceived: sponsorFormData.dateReceived
     };
     try {
+      setIsSavingSponsor(true);
       if (headers.length > 0) {
         const row = buildRowForSheet(headers, dataMap);
         await postRow(targetSheet, row);
@@ -338,6 +346,8 @@ const DonorDatabase = () => {
     } catch (error) {
       alert('Failed to save sponsor to the spreadsheet.');
       return;
+    } finally {
+      setIsSavingSponsor(false);
     }
     setSponsorFormData({
       businessName: '',
@@ -959,7 +969,13 @@ const DonorDatabase = () => {
               </div>
               <div style={formButtonsStyle}>
                 <button onClick={() => setShowDonationForm(false)} style={cancelButtonStyle}>Cancel</button>
-                <button onClick={handleDonationSubmit} style={submitButtonStyle}>Add Donation</button>
+                <button
+                  onClick={handleDonationSubmit}
+                  style={{ ...submitButtonStyle, opacity: isSavingDonation ? 0.7 : 1, cursor: isSavingDonation ? 'not-allowed' : 'pointer' }}
+                  disabled={isSavingDonation}
+                >
+                  {isSavingDonation ? 'Saving...' : 'Add Donation'}
+                </button>
               </div>
             </div>
           </div>
@@ -1027,7 +1043,13 @@ const DonorDatabase = () => {
               </div>
               <div style={formButtonsStyle}>
                 <button onClick={() => setShowSponsorForm(false)} style={cancelButtonStyle}>Cancel</button>
-                <button onClick={handleSponsorSubmit} style={submitButtonStyle}>Add Sponsor</button>
+                <button
+                  onClick={handleSponsorSubmit}
+                  style={{ ...submitButtonStyle, opacity: isSavingSponsor ? 0.7 : 1, cursor: isSavingSponsor ? 'not-allowed' : 'pointer' }}
+                  disabled={isSavingSponsor}
+                >
+                  {isSavingSponsor ? 'Saving...' : 'Add Sponsor'}
+                </button>
               </div>
             </div>
           </div>
