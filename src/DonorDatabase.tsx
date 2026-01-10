@@ -20,6 +20,8 @@ const DonorDatabase = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'closeDate', direction: 'desc' });
   const [isSavingDonation, setIsSavingDonation] = useState(false);
   const [isSavingSponsor, setIsSavingSponsor] = useState(false);
+  const [editingDonation, setEditingDonation] = useState(null);
+  const [editingSponsor, setEditingSponsor] = useState(null);
   
   const [donationFormData, setDonationFormData] = useState({
     donorName: '',
@@ -98,7 +100,7 @@ const DonorDatabase = () => {
       return '';
     };
 
-    const mapDonationRow = (row, year, index) => {
+    const mapDonationRow = (row, year, index, sheetName) => {
       const rowMap = {};
       Object.keys(row || {}).forEach((key) => {
         rowMap[normalizeHeader(key)] = row[key];
@@ -107,6 +109,8 @@ const DonorDatabase = () => {
       return {
         id: `donation-${year}-${index}`,
         year,
+        sheetName,
+        rowIndex: index + 2,
         donorName: rowMap['donor name'] || '',
         amount: Number.isFinite(amountValue) ? amountValue : 0,
         closeDate: normalizeDate(rowMap['close date']),
@@ -125,7 +129,7 @@ const DonorDatabase = () => {
       };
     };
 
-    const mapSponsorRow = (row, year, index) => {
+    const mapSponsorRow = (row, year, index, sheetName) => {
       const rowMap = {};
       Object.keys(row || {}).forEach((key) => {
         rowMap[normalizeHeader(key)] = row[key];
@@ -133,6 +137,8 @@ const DonorDatabase = () => {
       return {
         id: `sponsor-${year}-${index}`,
         year,
+        sheetName,
+        rowIndex: index + 2,
         businessName: rowMap['business name'] || '',
         mainContact: rowMap['main contact'] || '',
         donationFMV: rowMap['fair market value'] || rowMap['donation'] || '',
@@ -166,11 +172,11 @@ const DonorDatabase = () => {
           const year = yearMatch ? yearMatch[1] : '';
           if (/donations/i.test(sheetName)) {
             (sheet.rows || []).forEach((row, index) => {
-              donationRows.push(mapDonationRow(row, year, donationRows.length + index));
+              donationRows.push(mapDonationRow(row, year, index, sheetName));
             });
           } else if (/sponsors/i.test(sheetName)) {
             (sheet.rows || []).forEach((row, index) => {
-              sponsorRows.push(mapSponsorRow(row, year, sponsorRows.length + index));
+              sponsorRows.push(mapSponsorRow(row, year, index, sheetName));
             });
           }
         });
@@ -226,10 +232,10 @@ const DonorDatabase = () => {
     return row;
   };
 
-  const postRow = async (sheetName, row) => {
+  const postRow = async (sheetName, row, options = {}) => {
     const response = await fetch(SCRIPT_URL, {
       method: 'POST',
-      body: JSON.stringify({ sheet: sheetName, row })
+      body: JSON.stringify({ sheet: sheetName, row, ...options })
     });
     if (!response.ok) {
       throw new Error(`Failed to write to ${sheetName}`);
@@ -244,7 +250,7 @@ const DonorDatabase = () => {
     }
 
     const closeYear = donationFormData.closeDate ? donationFormData.closeDate.slice(0, 4) : '';
-    const targetSheet = activeTab.includes('2026') || closeYear === '2026'
+    const targetSheet = (editingDonation && editingDonation.sheetName) || activeTab.includes('2026') || closeYear === '2026'
       ? '2026 Donations'
       : activeTab.includes('2024') || closeYear === '2024'
       ? '2024 Donations'
@@ -273,12 +279,14 @@ const DonorDatabase = () => {
     
     const newDonation = {
       ...donationFormData,
-      id: Date.now(),
+      id: editingDonation?.id || Date.now(),
       year: activeTab.includes('2026') || closeYear === '2026'
         ? '2026'
         : activeTab.includes('2024') || closeYear === '2024'
         ? '2024'
         : '2025',
+      sheetName: editingDonation?.sheetName || targetSheet,
+      rowIndex: editingDonation?.rowIndex || null,
       amount: parseFloat(donationFormData.amount),
       closeDate: donationFormData.closeDate,
       acknowledgedDate: donationFormData.acknowledged ? donationFormData.acknowledgedDate : ''
@@ -287,9 +295,17 @@ const DonorDatabase = () => {
       setIsSavingDonation(true);
       if (headers.length > 0) {
         const row = buildRowForSheet(headers, dataMap);
-        await postRow(targetSheet, row);
+        if (editingDonation) {
+          await postRow(targetSheet, row, { action: 'update', rowIndex: editingDonation.rowIndex });
+        } else {
+          await postRow(targetSheet, row);
+        }
       }
-      setDonations([...donations, newDonation]);
+      if (editingDonation) {
+        setDonations(donations.map(d => d.id === editingDonation.id ? { ...d, ...newDonation } : d));
+      } else {
+        setDonations([newDonation, ...donations]);
+      }
     } catch (error) {
       alert('Failed to save donation to the spreadsheet.');
       return;
@@ -314,6 +330,7 @@ const DonorDatabase = () => {
       lastName: ''
     });
     setShowDonationForm(false);
+    setEditingDonation(null);
   };
 
   const handleSponsorSubmit = async () => {
@@ -323,7 +340,7 @@ const DonorDatabase = () => {
       return;
     }
 
-    const targetSheet = activeTab.includes('2026') ? '2026 Sponsors' : '2025 Sponsors';
+    const targetSheet = (editingSponsor && editingSponsor.sheetName) || activeTab.includes('2026') ? '2026 Sponsors' : '2025 Sponsors';
     const headers = sheetHeaders[targetSheet] || [];
     const dataMap = {
       'business name': sponsorFormData.businessName,
@@ -343,17 +360,27 @@ const DonorDatabase = () => {
 
     const newSponsor = {
       ...sponsorFormData,
-      id: Date.now(),
+      id: editingSponsor?.id || Date.now(),
       year: activeTab.includes('2026') ? '2026' : '2025',
+      sheetName: editingSponsor?.sheetName || targetSheet,
+      rowIndex: editingSponsor?.rowIndex || null,
       dateReceived: sponsorFormData.dateReceived
     };
     try {
       setIsSavingSponsor(true);
       if (headers.length > 0) {
         const row = buildRowForSheet(headers, dataMap);
-        await postRow(targetSheet, row);
+        if (editingSponsor) {
+          await postRow(targetSheet, row, { action: 'update', rowIndex: editingSponsor.rowIndex });
+        } else {
+          await postRow(targetSheet, row);
+        }
       }
-      setSponsors([...sponsors, newSponsor]);
+      if (editingSponsor) {
+        setSponsors(sponsors.map(s => s.id === editingSponsor.id ? { ...s, ...newSponsor } : s));
+      } else {
+        setSponsors([newSponsor, ...sponsors]);
+      }
     } catch (error) {
       alert('Failed to save sponsor to the spreadsheet.');
       return;
@@ -374,6 +401,7 @@ const DonorDatabase = () => {
       nshContact: ''
     });
     setShowSponsorForm(false);
+    setEditingSponsor(null);
   };
 
   const handleDonationChange = (e) => {
@@ -399,6 +427,46 @@ const DonorDatabase = () => {
       }
       return { key, direction: 'asc' };
     });
+  };
+
+  const startEditDonation = (donation) => {
+    setEditingDonation(donation);
+    setDonationFormData({
+      donorName: donation.donorName || '',
+      amount: donation.amount ? donation.amount.toString() : '',
+      closeDate: donation.closeDate || '',
+      donationType: donation.donationType || '',
+      paymentType: donation.paymentType || '',
+      notes: donation.notes || '',
+      benefits: donation.benefits || '',
+      acknowledged: !!donation.acknowledged,
+      acknowledgedDate: donation.acknowledgedDate || '',
+      accountType: donation.accountType || '',
+      address: donation.address || '',
+      email: donation.email || '',
+      phone: donation.phone || '',
+      informalName: donation.informalName || '',
+      lastName: donation.lastName || ''
+    });
+    setShowDonationForm(true);
+  };
+
+  const startEditSponsor = (sponsor) => {
+    setEditingSponsor(sponsor);
+    setSponsorFormData({
+      businessName: sponsor.businessName || '',
+      mainContact: sponsor.mainContact || '',
+      donationFMV: sponsor.donationFMV || '',
+      areaSupported: sponsor.areaSupported || '',
+      phoneNumber: sponsor.phoneNumber || '',
+      emailAddress: sponsor.emailAddress || '',
+      mailingAddress: sponsor.mailingAddress || '',
+      dateReceived: sponsor.dateReceived || '',
+      acknowledged: !!sponsor.acknowledged,
+      notes: sponsor.notes || '',
+      nshContact: sponsor.nshContact || ''
+    });
+    setShowSponsorForm(true);
   };
 
   useEffect(() => {
@@ -988,13 +1056,13 @@ const DonorDatabase = () => {
                 )}
               </div>
               <div style={formButtonsStyle}>
-                <button onClick={() => setShowDonationForm(false)} style={cancelButtonStyle}>Cancel</button>
+                <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); }} style={cancelButtonStyle}>Cancel</button>
                 <button
                   onClick={handleDonationSubmit}
                   style={{ ...submitButtonStyle, opacity: isSavingDonation ? 0.7 : 1, cursor: isSavingDonation ? 'not-allowed' : 'pointer' }}
                   disabled={isSavingDonation}
                 >
-                  {isSavingDonation ? 'Saving...' : 'Add Donation'}
+                  {isSavingDonation ? 'Saving...' : editingDonation ? 'Update Donation' : 'Add Donation'}
                 </button>
               </div>
             </div>
@@ -1062,13 +1130,13 @@ const DonorDatabase = () => {
                 </div>
               </div>
               <div style={formButtonsStyle}>
-                <button onClick={() => setShowSponsorForm(false)} style={cancelButtonStyle}>Cancel</button>
+                <button onClick={() => { setShowSponsorForm(false); setEditingSponsor(null); }} style={cancelButtonStyle}>Cancel</button>
                 <button
                   onClick={handleSponsorSubmit}
                   style={{ ...submitButtonStyle, opacity: isSavingSponsor ? 0.7 : 1, cursor: isSavingSponsor ? 'not-allowed' : 'pointer' }}
                   disabled={isSavingSponsor}
                 >
-                  {isSavingSponsor ? 'Saving...' : 'Add Sponsor'}
+                  {isSavingSponsor ? 'Saving...' : editingSponsor ? 'Update Sponsor' : 'Add Sponsor'}
                 </button>
               </div>
             </div>
@@ -1150,8 +1218,13 @@ const DonorDatabase = () => {
                             </div>
                           )}
                         </div>
-                        <div style={{ fontWeight: '600' }}>
-                          ${donation.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ fontWeight: '600' }}>
+                            ${donation.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                          </div>
+                          <button style={detailEditButtonStyle} onClick={() => startEditDonation(donation)}>
+                            Edit
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -1230,8 +1303,13 @@ const DonorDatabase = () => {
                             </div>
                           )}
                         </div>
-                        <div style={{ fontWeight: '600' }}>
-                          {sponsor.donationFMV || 'In-kind'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ fontWeight: '600' }}>
+                            {sponsor.donationFMV || 'In-kind'}
+                          </div>
+                          <button style={detailEditButtonStyle} onClick={() => startEditSponsor(sponsor)}>
+                            Edit
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -1392,6 +1470,16 @@ const detailItemRowStyle = {
   justifyContent: 'space-between',
   padding: '0.6rem 0',
   borderBottom: '1px solid #EFE7DC'
+};
+
+const detailEditButtonStyle = {
+  background: 'transparent',
+  border: '1px solid #D7C9BA',
+  color: '#6E5B44',
+  padding: '0.3rem 0.6rem',
+  borderRadius: '8px',
+  fontSize: '0.8rem',
+  cursor: 'pointer'
 };
 
 export default DonorDatabase;
