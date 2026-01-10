@@ -20,8 +20,10 @@ const DonorDatabase = () => {
   const [sortConfig, setSortConfig] = useState({ key: 'closeDate', direction: 'desc' });
   const [isSavingDonation, setIsSavingDonation] = useState(false);
   const [isSavingSponsor, setIsSavingSponsor] = useState(false);
+  const [isSavingDonor, setIsSavingDonor] = useState(false);
   const [editingDonation, setEditingDonation] = useState(null);
   const [editingSponsor, setEditingSponsor] = useState(null);
+  const [editingDonor, setEditingDonor] = useState(null);
   
   const [donationFormData, setDonationFormData] = useState({
     donorName: '',
@@ -38,7 +40,8 @@ const DonorDatabase = () => {
     email: '',
     phone: '',
     informalName: '',
-    lastName: ''
+    lastName: '',
+    donorNotes: ''
   });
 
   const [sponsorFormData, setSponsorFormData] = useState({
@@ -125,7 +128,8 @@ const DonorDatabase = () => {
         email: rowMap['email'] || '',
         phone: rowMap['phone number'] || rowMap['phone'] || '',
         informalName: rowMap['informal names'] || rowMap['informal name'] || '',
-        lastName: rowMap['last name'] || ''
+        lastName: rowMap['last name'] || '',
+        donorNotes: rowMap['donor notes'] || ''
       };
     };
 
@@ -274,7 +278,8 @@ const DonorDatabase = () => {
       'phone': donationFormData.phone,
       'informal names': donationFormData.informalName,
       'informal name': donationFormData.informalName,
-      'last name': donationFormData.lastName
+      'last name': donationFormData.lastName,
+      'donor notes': donationFormData.donorNotes || ''
     };
     
     const newDonation = {
@@ -327,7 +332,8 @@ const DonorDatabase = () => {
       email: '',
       phone: '',
       informalName: '',
-      lastName: ''
+      lastName: '',
+      donorNotes: ''
     });
     setShowDonationForm(false);
     setEditingDonation(null);
@@ -446,7 +452,8 @@ const DonorDatabase = () => {
       email: donation.email || '',
       phone: donation.phone || '',
       informalName: donation.informalName || '',
-      lastName: donation.lastName || ''
+      lastName: donation.lastName || '',
+      donorNotes: donation.donorNotes || ''
     });
     setShowDonationForm(true);
   };
@@ -467,6 +474,45 @@ const DonorDatabase = () => {
       nshContact: sponsor.nshContact || ''
     });
     setShowSponsorForm(true);
+  };
+
+  const startEditDonor = (donor) => {
+    setEditingDonor({
+      name: donor.donorName || '',
+      email: donor.email || '',
+      address: donor.address || '',
+      phone: donor.phone || '',
+      donorNotes: donor.donorNotes || ''
+    });
+  };
+
+  const handleDonorUpdate = async () => {
+    if (!editingDonor) return;
+    if (isSavingDonor) return;
+    try {
+      setIsSavingDonor(true);
+      await postRow('ALL_DONATIONS', {}, {
+        action: 'updateDonor',
+        donorName: editingDonor.name,
+        donorEmail: editingDonor.email,
+        updates: {
+          address: editingDonor.address,
+          phone: editingDonor.phone,
+          donorNotes: editingDonor.donorNotes
+        }
+      });
+      setDonations(donations.map(d => {
+        const nameMatch = (d.donorName || '').toLowerCase() === (editingDonor.name || '').toLowerCase();
+        const emailMatch = (d.email || '').toLowerCase() === (editingDonor.email || '').toLowerCase();
+        if (!nameMatch || !emailMatch) return d;
+        return { ...d, address: editingDonor.address, phone: editingDonor.phone, donorNotes: editingDonor.donorNotes };
+      }));
+      setEditingDonor(null);
+    } catch (error) {
+      alert('Failed to update donor details.');
+    } finally {
+      setIsSavingDonor(false);
+    }
   };
 
   useEffect(() => {
@@ -617,6 +663,23 @@ const DonorDatabase = () => {
     : 0;
 
   const isSponsorsView = activeTab.includes('sponsors');
+  const donorDirectory = useMemo(() => {
+    const seen = new Set();
+    return donations
+      .map(d => ({
+        donorName: d.donorName || '',
+        email: d.email || '',
+        address: d.address || '',
+        phone: d.phone || '',
+        donorNotes: d.donorNotes || ''
+      }))
+      .filter(d => {
+        const key = `${d.donorName.toLowerCase()}::${d.email.toLowerCase()}`;
+        if (!d.donorName || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }, [donations]);
 
   return (
     <div style={{ 
@@ -983,7 +1046,7 @@ const DonorDatabase = () => {
               <div style={formGridStyle}>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Donor Name *</label>
-                  <input type="text" name="donorName" value={donationFormData.donorName} onChange={handleDonationChange} style={inputStyle} />
+                  <input list="donor-names" type="text" name="donorName" value={donationFormData.donorName} onChange={handleDonationChange} style={inputStyle} />
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Last Name</label>
@@ -1024,7 +1087,7 @@ const DonorDatabase = () => {
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Email</label>
-                  <input type="email" name="email" value={donationFormData.email} onChange={handleDonationChange} style={inputStyle} />
+                  <input list="donor-emails" type="email" name="email" value={donationFormData.email} onChange={handleDonationChange} style={inputStyle} />
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Phone</label>
@@ -1166,6 +1229,12 @@ const DonorDatabase = () => {
               </div>
               
               <div style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '1rem', color: '#6E5B44', fontWeight: '600' }}>Donor Overview</div>
+                  <button style={detailEditButtonStyle} onClick={() => startEditDonor(donorInfo)}>
+                    Edit Contact & Notes
+                  </button>
+                </div>
                 <div style={detailCardStyle}>
                   <h3 style={detailTitleStyle}>Contact Information</h3>
                   <div style={detailGridStyle}>
@@ -1193,6 +1262,12 @@ const DonorDatabase = () => {
                         <span>{donorInfo.accountType}</span>
                       </div>
                     )}
+                  </div>
+                </div>
+                <div style={detailCardStyle}>
+                  <h3 style={detailTitleStyle}>Donor Notes</h3>
+                  <div style={{ color: '#6E5B44', fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>
+                    {donorInfo.donorNotes ? donorInfo.donorNotes : 'No notes yet.'}
                   </div>
                 </div>
 
@@ -1320,6 +1395,76 @@ const DonorDatabase = () => {
           </div>
         );
       })()}
+      {editingDonor && (
+        <div style={modalOverlayStyle}>
+          <div style={modalStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ margin: 0, color: '#8B6B45' }}>Edit Donor Contact & Notes</h2>
+              <button onClick={() => setEditingDonor(null)} style={closeButtonStyle}>
+                <X size={24} color="#6E5B44" />
+              </button>
+            </div>
+            <div style={{ padding: '1.5rem' }}>
+              <div style={formGridStyle}>
+                <div style={formGroupStyle}>
+                  <label style={labelStyle}>Donor Name</label>
+                  <input type="text" value={editingDonor.name} readOnly style={{ ...inputStyle, background: '#F7F2E9' }} />
+                </div>
+                <div style={formGroupStyle}>
+                  <label style={labelStyle}>Email</label>
+                  <input type="text" value={editingDonor.email} readOnly style={{ ...inputStyle, background: '#F7F2E9' }} />
+                </div>
+                <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
+                  <label style={labelStyle}>Address</label>
+                  <input
+                    type="text"
+                    value={editingDonor.address}
+                    onChange={(e) => setEditingDonor({ ...editingDonor, address: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+                <div style={formGroupStyle}>
+                  <label style={labelStyle}>Phone Number</label>
+                  <input
+                    type="text"
+                    value={editingDonor.phone}
+                    onChange={(e) => setEditingDonor({ ...editingDonor, phone: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+                <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
+                  <label style={labelStyle}>Donor Notes</label>
+                  <textarea
+                    value={editingDonor.donorNotes}
+                    onChange={(e) => setEditingDonor({ ...editingDonor, donorNotes: e.target.value })}
+                    style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }}
+                  />
+                </div>
+              </div>
+              <div style={formButtonsStyle}>
+                <button onClick={() => setEditingDonor(null)} style={cancelButtonStyle}>Cancel</button>
+                <button
+                  onClick={handleDonorUpdate}
+                  style={{ ...submitButtonStyle, opacity: isSavingDonor ? 0.7 : 1, cursor: isSavingDonor ? 'not-allowed' : 'pointer' }}
+                  disabled={isSavingDonor}
+                >
+                  {isSavingDonor ? 'Saving...' : 'Update Donor'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <datalist id="donor-names">
+        {donorDirectory.map(d => (
+          <option key={`${d.donorName}-${d.email}`} value={d.donorName} />
+        ))}
+      </datalist>
+      <datalist id="donor-emails">
+        {donorDirectory.map(d => (
+          <option key={`${d.email}-${d.donorName}`} value={d.email} />
+        ))}
+      </datalist>
     </div>
   );
 };
