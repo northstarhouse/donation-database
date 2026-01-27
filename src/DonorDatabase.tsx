@@ -16,8 +16,7 @@ const DonorDatabase = () => {
   const [selectedSponsor, setSelectedSponsor] = useState(null);
   const [activeTab, setActiveTab] = useState('2026-donations');
   const [matchedDonorNotice, setMatchedDonorNotice] = useState('');
-  const [useExistingDonor, setUseExistingDonor] = useState(true);
-  const [selectedExistingDonor, setSelectedExistingDonor] = useState('');
+  const [selectedDonorMatchKey, setSelectedDonorMatchKey] = useState('');
   const [segmentFilter, setSegmentFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ key: 'closeDate', direction: 'desc' });
   const [isSavingDonation, setIsSavingDonation] = useState(false);
@@ -62,12 +61,12 @@ const DonorDatabase = () => {
   });
 
   const normalizeDonorValue = (value) => (value || '').toString().trim().toLowerCase();
-  const getLatestDonorMatch = (donorName, donorEmail) => {
+  const getDonorMatches = (donorName, donorEmail) => {
     const nameKey = normalizeDonorValue(donorName);
     const emailKey = normalizeDonorValue(donorEmail);
-    if (!nameKey && !emailKey) return null;
+    if (!nameKey && !emailKey) return [];
 
-    const matches = donations.filter((donation) => {
+    return donations.filter((donation) => {
       const donationName = normalizeDonorValue(donation.donorName);
       const donationEmail = normalizeDonorValue(donation.email);
       if (nameKey && emailKey) {
@@ -75,16 +74,16 @@ const DonorDatabase = () => {
       }
       if (emailKey) return donationEmail === emailKey;
       return donationName === nameKey;
-    });
-
-    if (matches.length === 0) return null;
-
-    return [...matches].sort((a, b) => {
+    }).sort((a, b) => {
       if (a.closeDate && b.closeDate) {
         return new Date(b.closeDate) - new Date(a.closeDate);
       }
       return (b.id || 0) - (a.id || 0);
-    })[0];
+    });
+  };
+  const getLatestDonorMatch = (donorName, donorEmail) => {
+    const matches = getDonorMatches(donorName, donorEmail);
+    return matches[0] || null;
   };
 
   const donorSegments = useMemo(() => {
@@ -365,8 +364,7 @@ const DonorDatabase = () => {
       lastName: '',
       donorNotes: ''
     });
-    setUseExistingDonor(true);
-    setSelectedExistingDonor('');
+    setSelectedDonorMatchKey('');
     setShowDonationForm(false);
     setEditingDonation(null);
   };
@@ -469,8 +467,7 @@ const DonorDatabase = () => {
 
   const startEditDonation = (donation) => {
     setEditingDonation(donation);
-    setUseExistingDonor(false);
-    setSelectedExistingDonor('');
+    setSelectedDonorMatchKey('');
     setDonationFormData({
       donorName: donation.donorName || '',
       amount: donation.amount ? donation.amount.toString() : '',
@@ -575,36 +572,46 @@ const DonorDatabase = () => {
       setMatchedDonorNotice('');
       return;
     }
-    if (!useExistingDonor) {
-      setMatchedDonorNotice('');
-      return;
-    }
 
     const donorName = donationFormData.donorName.trim();
     const email = donationFormData.email.trim();
     if (!donorName && !email) {
       setMatchedDonorNotice('');
+      setSelectedDonorMatchKey('');
       return;
     }
 
-    const latest = getLatestDonorMatch(donorName, email);
-    if (!latest) {
+    const matches = getDonorMatches(donorName, email);
+    if (matches.length === 0) {
       setMatchedDonorNotice('');
+      setSelectedDonorMatchKey('');
+      return;
+    }
+
+    if (matches.length === 1) {
+      const latest = matches[0];
+      setSelectedDonorMatchKey(`${latest.donorName}||${latest.email}`);
+      setDonationFormData(prev => ({
+        ...prev,
+        donorName: prev.donorName || latest.donorName || '',
+        email: prev.email || latest.email || '',
+        address: prev.address || latest.address || '',
+        phone: prev.phone || latest.phone || '',
+        informalName: prev.informalName || latest.informalName || '',
+        lastName: prev.lastName || latest.lastName || '',
+        accountType: prev.accountType || latest.accountType || ''
+      }));
+      setMatchedDonorNotice('Existing donor found - contact details were filled in.');
       return;
     }
 
     setDonationFormData(prev => ({
       ...prev,
-      donorName: prev.donorName || latest.donorName || '',
-      email: prev.email || latest.email || '',
-      address: prev.address || latest.address || '',
-      phone: prev.phone || latest.phone || '',
-      informalName: prev.informalName || latest.informalName || '',
-      lastName: prev.lastName || latest.lastName || '',
-      accountType: prev.accountType || latest.accountType || ''
+      donorName: prev.donorName || '',
+      email: prev.email || ''
     }));
-    setMatchedDonorNotice('Previous donor found - contact details were filled in.');
-  }, [donationFormData.donorName, donationFormData.email, donations, showDonationForm, editingDonation, useExistingDonor]);
+    setMatchedDonorNotice('Multiple donors found - select the correct profile.');
+  }, [donationFormData.donorName, donationFormData.email, donations, showDonationForm, editingDonation]);
 
   const donations2026 = donations.filter(d => d.year === '2026');
   const donations2025 = donations.filter(d => d.year === '2025');
@@ -720,16 +727,40 @@ const DonorDatabase = () => {
         return true;
       });
   }, [donations]);
+  const donorMatchCandidates = useMemo(() => {
+    if (!showDonationForm || editingDonation) return [];
+    return getDonorMatches(donationFormData.donorName, donationFormData.email);
+  }, [donationFormData.donorName, donationFormData.email, donations, showDonationForm, editingDonation]);
+  const selectedDonorMatch = useMemo(() => {
+    if (selectedDonorMatchKey) {
+      const [name, email] = selectedDonorMatchKey.split('||');
+      return getLatestDonorMatch(name, email);
+    }
+    if (donorMatchCandidates.length === 1) {
+      return donorMatchCandidates[0];
+    }
+    return null;
+  }, [selectedDonorMatchKey, donorMatchCandidates, donations]);
+  const shouldShowDonorProfile = !isEditingDonation && (donationFormData.donorName.trim() || donationFormData.email.trim());
+  const hasExistingDonorProfile = Boolean(selectedDonorMatch);
 
   const handleExistingDonorSelect = (value) => {
-    setSelectedExistingDonor(value);
+    setSelectedDonorMatchKey(value);
     if (!value) return;
     const [name, email] = value.split('||');
+    const match = getLatestDonorMatch(name, email);
+    if (!match) return;
     setDonationFormData(prev => ({
       ...prev,
-      donorName: name || '',
-      email: email || ''
+      donorName: match.donorName || prev.donorName,
+      email: match.email || prev.email,
+      address: match.address || prev.address,
+      phone: match.phone || prev.phone,
+      informalName: match.informalName || prev.informalName,
+      lastName: match.lastName || prev.lastName,
+      accountType: match.accountType || prev.accountType
     }));
+    setMatchedDonorNotice('Existing donor profile loaded.');
   };
 
   return (
@@ -925,8 +956,7 @@ const DonorDatabase = () => {
                 setShowSponsorForm(true);
               } else {
                 setEditingDonation(null);
-                setUseExistingDonor(true);
-                setSelectedExistingDonor('');
+                setSelectedDonorMatchKey('');
                 setShowDonationForm(true);
               }
             }}
@@ -1096,7 +1126,7 @@ const DonorDatabase = () => {
           <div style={modalStyle}>
             <div style={modalHeaderStyle}>
               <h2 style={{ margin: 0, color: '#8B6B45' }}>{isEditingDonation ? 'Edit Donation' : 'Add New Donation'}</h2>
-              <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); setUseExistingDonor(true); setSelectedExistingDonor(''); }} style={closeButtonStyle}>
+              <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); setSelectedDonorMatchKey(''); }} style={closeButtonStyle}>
                 <X size={24} color="#666" />
               </button>
             </div>
@@ -1112,35 +1142,16 @@ const DonorDatabase = () => {
                 </div>
               )}
               <div style={formGridStyle}>
-                {!isEditingDonation && (
+                {!isEditingDonation && donorMatchCandidates.length > 1 && (
                   <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
-                    <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={useExistingDonor}
-                        onChange={(e) => {
-                          setUseExistingDonor(e.target.checked);
-                          if (!e.target.checked) {
-                            setSelectedExistingDonor('');
-                            setMatchedDonorNotice('');
-                          }
-                        }}
-                        style={{ width: 'auto' }}
-                      />
-                      Use existing donor
-                    </label>
-                  </div>
-                )}
-                {!isEditingDonation && useExistingDonor && (
-                  <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
-                    <label style={labelStyle}>Existing Donor</label>
+                    <label style={labelStyle}>Select Existing Donor</label>
                     <select
-                      value={selectedExistingDonor}
+                      value={selectedDonorMatchKey}
                       onChange={(e) => handleExistingDonorSelect(e.target.value)}
                       style={inputStyle}
                     >
                       <option value="">Select donor...</option>
-                      {donorDirectory.map((donor) => {
+                      {donorMatchCandidates.map((donor) => {
                         const key = `${donor.donorName}||${donor.email}`;
                         const label = donor.email ? `${donor.donorName} — ${donor.email}` : donor.donorName;
                         return (
@@ -1160,30 +1171,8 @@ const DonorDatabase = () => {
                     name="donorName"
                     value={donationFormData.donorName}
                     onChange={handleDonationChange}
-                    style={(isEditingDonation || (useExistingDonor && selectedExistingDonor)) ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation || (useExistingDonor && selectedExistingDonor)}
-                  />
-                </div>
-                <div style={formGroupStyle}>
-                  <label style={labelStyle}>Last Name</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={donationFormData.lastName}
-                    onChange={handleDonationChange}
-                    style={isEditingDonation ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation}
-                  />
-                </div>
-                <div style={formGroupStyle}>
-                  <label style={labelStyle}>Informal Name</label>
-                  <input
-                    type="text"
-                    name="informalName"
-                    value={donationFormData.informalName}
-                    onChange={handleDonationChange}
-                    style={isEditingDonation ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation}
+                    style={(isEditingDonation || hasExistingDonorProfile) ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation || hasExistingDonorProfile}
                   />
                 </div>
                 <div style={formGroupStyle}>
@@ -1221,40 +1210,6 @@ const DonorDatabase = () => {
                     {accountTypes.map(type => <option key={type} value={type}>{type}</option>)}
                   </select>
                 </div>
-                <div style={formGroupStyle}>
-                  <label style={labelStyle}>Email</label>
-                  <input
-                    list="donor-emails"
-                    type="email"
-                    name="email"
-                    value={donationFormData.email}
-                    onChange={handleDonationChange}
-                    style={(isEditingDonation || (useExistingDonor && selectedExistingDonor)) ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation || (useExistingDonor && selectedExistingDonor)}
-                  />
-                </div>
-                <div style={formGroupStyle}>
-                  <label style={labelStyle}>Phone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={donationFormData.phone}
-                    onChange={handleDonationChange}
-                    style={isEditingDonation ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation}
-                  />
-                </div>
-                <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
-                  <label style={labelStyle}>Address</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={donationFormData.address}
-                    onChange={handleDonationChange}
-                    style={(isEditingDonation || (useExistingDonor && selectedExistingDonor)) ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation || (useExistingDonor && selectedExistingDonor)}
-                  />
-                </div>
                 <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Benefits</label>
                   <input type="text" name="benefits" value={donationFormData.benefits} onChange={handleDonationChange} style={inputStyle} placeholder="Event tickets, naming rights, etc." />
@@ -1276,8 +1231,91 @@ const DonorDatabase = () => {
                   </div>
                 )}
               </div>
+              {shouldShowDonorProfile && (
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #E3DBD0' }}>
+                  <div style={{ fontSize: '1rem', color: '#6E5B44', fontWeight: '600', marginBottom: '1rem' }}>
+                    {hasExistingDonorProfile ? 'Existing Donor Profile' : 'Create Donor Profile'}
+                  </div>
+                  {hasExistingDonorProfile ? (
+                    <div style={{ color: '#6E5B44', marginBottom: '1rem' }}>
+                      Donor profile loaded from previous donations. Use "Edit Contact & Notes" from the donor profile to update details.
+                    </div>
+                  ) : (
+                    <div style={{ color: '#6E5B44', marginBottom: '1rem' }}>
+                      This name is not in the donor list yet. Add contact details to create a donor profile.
+                    </div>
+                  )}
+                  <div style={formGridStyle}>
+                    <div style={formGroupStyle}>
+                      <label style={labelStyle}>Email</label>
+                      <input
+                        list="donor-emails"
+                        type="email"
+                        name="email"
+                        value={donationFormData.email}
+                        onChange={handleDonationChange}
+                        style={(isEditingDonation || hasExistingDonorProfile) ? disabledInputStyle : inputStyle}
+                        disabled={isEditingDonation || hasExistingDonorProfile}
+                      />
+                    </div>
+                    <div style={formGroupStyle}>
+                      <label style={labelStyle}>Phone</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={donationFormData.phone}
+                        onChange={handleDonationChange}
+                        style={isEditingDonation ? disabledInputStyle : inputStyle}
+                        disabled={isEditingDonation}
+                      />
+                    </div>
+                    <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
+                      <label style={labelStyle}>Address</label>
+                      <input
+                        type="text"
+                        name="address"
+                        value={donationFormData.address}
+                        onChange={handleDonationChange}
+                        style={(isEditingDonation || hasExistingDonorProfile) ? disabledInputStyle : inputStyle}
+                        disabled={isEditingDonation || hasExistingDonorProfile}
+                      />
+                    </div>
+                    <div style={formGroupStyle}>
+                      <label style={labelStyle}>Last Name</label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        value={donationFormData.lastName}
+                        onChange={handleDonationChange}
+                        style={isEditingDonation ? disabledInputStyle : inputStyle}
+                        disabled={isEditingDonation}
+                      />
+                    </div>
+                    <div style={formGroupStyle}>
+                      <label style={labelStyle}>Informal Name</label>
+                      <input
+                        type="text"
+                        name="informalName"
+                        value={donationFormData.informalName}
+                        onChange={handleDonationChange}
+                        style={isEditingDonation ? disabledInputStyle : inputStyle}
+                        disabled={isEditingDonation}
+                      />
+                    </div>
+                    <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
+                      <label style={labelStyle}>Donor Notes</label>
+                      <textarea
+                        name="donorNotes"
+                        value={donationFormData.donorNotes}
+                        onChange={handleDonationChange}
+                        style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               <div style={formButtonsStyle}>
-                <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); setUseExistingDonor(true); setSelectedExistingDonor(''); }} style={cancelButtonStyle}>Cancel</button>
+                <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); setSelectedDonorMatchKey(''); }} style={cancelButtonStyle}>Cancel</button>
                 <button
                   onClick={handleDonationSubmit}
                   style={{ ...submitButtonStyle, opacity: isSavingDonation ? 0.7 : 1, cursor: isSavingDonation ? 'not-allowed' : 'pointer' }}
