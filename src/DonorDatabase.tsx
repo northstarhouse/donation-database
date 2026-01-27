@@ -1160,8 +1160,8 @@ const DonorDatabase = () => {
                     name="donorName"
                     value={donationFormData.donorName}
                     onChange={handleDonationChange}
-                    style={isEditingDonation ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation}
+                    style={(isEditingDonation || (useExistingDonor && selectedExistingDonor)) ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation || (useExistingDonor && selectedExistingDonor)}
                   />
                 </div>
                 <div style={formGroupStyle}>
@@ -1229,8 +1229,8 @@ const DonorDatabase = () => {
                     name="email"
                     value={donationFormData.email}
                     onChange={handleDonationChange}
-                    style={isEditingDonation ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation}
+                    style={(isEditingDonation || (useExistingDonor && selectedExistingDonor)) ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation || (useExistingDonor && selectedExistingDonor)}
                   />
                 </div>
                 <div style={formGroupStyle}>
@@ -1251,8 +1251,8 @@ const DonorDatabase = () => {
                     name="address"
                     value={donationFormData.address}
                     onChange={handleDonationChange}
-                    style={isEditingDonation ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation}
+                    style={(isEditingDonation || (useExistingDonor && selectedExistingDonor)) ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation || (useExistingDonor && selectedExistingDonor)}
                   />
                 </div>
                 <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
