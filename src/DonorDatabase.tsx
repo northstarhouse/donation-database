@@ -24,6 +24,7 @@ const DonorDatabase = () => {
   const [editingDonation, setEditingDonation] = useState(null);
   const [editingSponsor, setEditingSponsor] = useState(null);
   const [editingDonor, setEditingDonor] = useState(null);
+  const isEditingDonation = Boolean(editingDonation);
   
   const [donationFormData, setDonationFormData] = useState({
     donorName: '',
@@ -57,6 +58,32 @@ const DonorDatabase = () => {
     notes: '',
     nshContact: ''
   });
+
+  const normalizeDonorValue = (value) => (value || '').toString().trim().toLowerCase();
+  const getLatestDonorMatch = (donorName, donorEmail) => {
+    const nameKey = normalizeDonorValue(donorName);
+    const emailKey = normalizeDonorValue(donorEmail);
+    if (!nameKey && !emailKey) return null;
+
+    const matches = donations.filter((donation) => {
+      const donationName = normalizeDonorValue(donation.donorName);
+      const donationEmail = normalizeDonorValue(donation.email);
+      if (nameKey && emailKey) {
+        return donationName === nameKey && donationEmail === emailKey;
+      }
+      if (emailKey) return donationEmail === emailKey;
+      return donationName === nameKey;
+    });
+
+    if (matches.length === 0) return null;
+
+    return [...matches].sort((a, b) => {
+      if (a.closeDate && b.closeDate) {
+        return new Date(b.closeDate) - new Date(a.closeDate);
+      }
+      return (b.id || 0) - (a.id || 0);
+    })[0];
+  };
 
   const donorSegments = useMemo(() => {
     const normalizeValue = (value) => (value || '').toString().trim().toLowerCase();
@@ -211,6 +238,7 @@ const DonorDatabase = () => {
   ];
   const paymentTypes = ['Check', 'Cash', 'Credit Card', 'Venmo', 'PayPal', 'Stock/Securities', 'Wire Transfer'];
   const accountTypes = ['Individual', 'Family', 'Corporate', 'Foundation', 'Government'];
+  const disabledInputStyle = { ...inputStyle, background: '#F7F2E9', color: '#8C7C6B' };
 
   const normalizeHeader = (value) => value.toString().trim().toLowerCase().replace(/\s+/g, ' ');
   const formatDisplayDate = (value) => {
@@ -537,34 +565,28 @@ const DonorDatabase = () => {
       setMatchedDonorNotice('');
       return;
     }
+    if (editingDonation) {
+      setMatchedDonorNotice('');
+      return;
+    }
+
     const donorName = donationFormData.donorName.trim();
     const email = donationFormData.email.trim();
-    if (!donorName || !email) {
+    if (!donorName && !email) {
       setMatchedDonorNotice('');
       return;
     }
 
-    const matches = donations.filter(d => {
-      const nameMatch = d.donorName && d.donorName.toLowerCase() === donorName.toLowerCase();
-      const emailMatch = d.email && d.email.toLowerCase() === email.toLowerCase();
-      return nameMatch && emailMatch;
-    });
-
-    if (matches.length === 0) {
+    const latest = getLatestDonorMatch(donorName, email);
+    if (!latest) {
       setMatchedDonorNotice('');
       return;
     }
-
-    const sortedMatches = [...matches].sort((a, b) => {
-      if (a.closeDate && b.closeDate) {
-        return new Date(b.closeDate) - new Date(a.closeDate);
-      }
-      return (b.id || 0) - (a.id || 0);
-    });
-    const latest = sortedMatches[0];
 
     setDonationFormData(prev => ({
       ...prev,
+      donorName: prev.donorName || latest.donorName || '',
+      email: prev.email || latest.email || '',
       address: prev.address || latest.address || '',
       phone: prev.phone || latest.phone || '',
       informalName: prev.informalName || latest.informalName || '',
@@ -572,7 +594,7 @@ const DonorDatabase = () => {
       accountType: prev.accountType || latest.accountType || ''
     }));
     setMatchedDonorNotice('Previous donor found - contact details were filled in.');
-  }, [donationFormData.donorName, donationFormData.email, donations, showDonationForm]);
+  }, [donationFormData.donorName, donationFormData.email, donations, showDonationForm, editingDonation]);
 
   const donations2026 = donations.filter(d => d.year === '2026');
   const donations2025 = donations.filter(d => d.year === '2025');
@@ -877,7 +899,14 @@ const DonorDatabase = () => {
             />
           </div>
           <button
-            onClick={() => isSponsorsView ? setShowSponsorForm(true) : setShowDonationForm(true)}
+            onClick={() => {
+              if (isSponsorsView) {
+                setShowSponsorForm(true);
+              } else {
+                setEditingDonation(null);
+                setShowDonationForm(true);
+              }
+            }}
             style={{
               background: '#8B6B45',
               color: 'white',
@@ -1043,12 +1072,17 @@ const DonorDatabase = () => {
         <div style={modalOverlayStyle}>
           <div style={modalStyle}>
             <div style={modalHeaderStyle}>
-              <h2 style={{ margin: 0, color: '#8B6B45' }}>Add New Donation</h2>
-              <button onClick={() => setShowDonationForm(false)} style={closeButtonStyle}>
+              <h2 style={{ margin: 0, color: '#8B6B45' }}>{isEditingDonation ? 'Edit Donation' : 'Add New Donation'}</h2>
+              <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); }} style={closeButtonStyle}>
                 <X size={24} color="#666" />
               </button>
             </div>
             <div style={{ padding: '1.5rem' }}>
+              {isEditingDonation && (
+                <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#F7F2E9', borderRadius: '10px', color: '#6E5B44' }}>
+                  Editing donation details only. To update donor contact info, open the donor profile and use "Edit Contact & Notes".
+                </div>
+              )}
               {matchedDonorNotice && (
                 <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', background: '#F7F2E9', borderRadius: '10px', color: '#6E5B44' }}>
                   {matchedDonorNotice}
@@ -1057,15 +1091,37 @@ const DonorDatabase = () => {
               <div style={formGridStyle}>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Donor Name *</label>
-                  <input list="donor-names" type="text" name="donorName" value={donationFormData.donorName} onChange={handleDonationChange} style={inputStyle} />
+                  <input
+                    list="donor-names"
+                    type="text"
+                    name="donorName"
+                    value={donationFormData.donorName}
+                    onChange={handleDonationChange}
+                    style={isEditingDonation ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation}
+                  />
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Last Name</label>
-                  <input type="text" name="lastName" value={donationFormData.lastName} onChange={handleDonationChange} style={inputStyle} />
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={donationFormData.lastName}
+                    onChange={handleDonationChange}
+                    style={isEditingDonation ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation}
+                  />
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Informal Name</label>
-                  <input type="text" name="informalName" value={donationFormData.informalName} onChange={handleDonationChange} style={inputStyle} />
+                  <input
+                    type="text"
+                    name="informalName"
+                    value={donationFormData.informalName}
+                    onChange={handleDonationChange}
+                    style={isEditingDonation ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation}
+                  />
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Amount *</label>
@@ -1091,22 +1147,50 @@ const DonorDatabase = () => {
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Account Type *</label>
-                  <select name="accountType" value={donationFormData.accountType} onChange={handleDonationChange} style={inputStyle}>
+                  <select
+                    name="accountType"
+                    value={donationFormData.accountType}
+                    onChange={handleDonationChange}
+                    style={isEditingDonation ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation}
+                  >
                     <option value="">Select...</option>
                     {accountTypes.map(type => <option key={type} value={type}>{type}</option>)}
                   </select>
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Email</label>
-                  <input list="donor-emails" type="email" name="email" value={donationFormData.email} onChange={handleDonationChange} style={inputStyle} />
+                  <input
+                    list="donor-emails"
+                    type="email"
+                    name="email"
+                    value={donationFormData.email}
+                    onChange={handleDonationChange}
+                    style={isEditingDonation ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation}
+                  />
                 </div>
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Phone</label>
-                  <input type="tel" name="phone" value={donationFormData.phone} onChange={handleDonationChange} style={inputStyle} />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={donationFormData.phone}
+                    onChange={handleDonationChange}
+                    style={isEditingDonation ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation}
+                  />
                 </div>
                 <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Address</label>
-                  <input type="text" name="address" value={donationFormData.address} onChange={handleDonationChange} style={inputStyle} />
+                  <input
+                    type="text"
+                    name="address"
+                    value={donationFormData.address}
+                    onChange={handleDonationChange}
+                    style={isEditingDonation ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation}
+                  />
                 </div>
                 <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Benefits</label>
