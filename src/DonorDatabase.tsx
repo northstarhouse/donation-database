@@ -16,6 +16,8 @@ const DonorDatabase = () => {
   const [selectedSponsor, setSelectedSponsor] = useState(null);
   const [activeTab, setActiveTab] = useState('2026-donations');
   const [matchedDonorNotice, setMatchedDonorNotice] = useState('');
+  const [useExistingDonor, setUseExistingDonor] = useState(true);
+  const [selectedExistingDonor, setSelectedExistingDonor] = useState('');
   const [segmentFilter, setSegmentFilter] = useState('all');
   const [sortConfig, setSortConfig] = useState({ key: 'closeDate', direction: 'desc' });
   const [isSavingDonation, setIsSavingDonation] = useState(false);
@@ -363,6 +365,8 @@ const DonorDatabase = () => {
       lastName: '',
       donorNotes: ''
     });
+    setUseExistingDonor(true);
+    setSelectedExistingDonor('');
     setShowDonationForm(false);
     setEditingDonation(null);
   };
@@ -465,6 +469,8 @@ const DonorDatabase = () => {
 
   const startEditDonation = (donation) => {
     setEditingDonation(donation);
+    setUseExistingDonor(false);
+    setSelectedExistingDonor('');
     setDonationFormData({
       donorName: donation.donorName || '',
       amount: donation.amount ? donation.amount.toString() : '',
@@ -569,6 +575,10 @@ const DonorDatabase = () => {
       setMatchedDonorNotice('');
       return;
     }
+    if (!useExistingDonor) {
+      setMatchedDonorNotice('');
+      return;
+    }
 
     const donorName = donationFormData.donorName.trim();
     const email = donationFormData.email.trim();
@@ -594,7 +604,7 @@ const DonorDatabase = () => {
       accountType: prev.accountType || latest.accountType || ''
     }));
     setMatchedDonorNotice('Previous donor found - contact details were filled in.');
-  }, [donationFormData.donorName, donationFormData.email, donations, showDonationForm, editingDonation]);
+  }, [donationFormData.donorName, donationFormData.email, donations, showDonationForm, editingDonation, useExistingDonor]);
 
   const donations2026 = donations.filter(d => d.year === '2026');
   const donations2025 = donations.filter(d => d.year === '2025');
@@ -710,6 +720,17 @@ const DonorDatabase = () => {
         return true;
       });
   }, [donations]);
+
+  const handleExistingDonorSelect = (value) => {
+    setSelectedExistingDonor(value);
+    if (!value) return;
+    const [name, email] = value.split('||');
+    setDonationFormData(prev => ({
+      ...prev,
+      donorName: name || '',
+      email: email || ''
+    }));
+  };
 
   return (
     <div style={{ 
@@ -904,6 +925,8 @@ const DonorDatabase = () => {
                 setShowSponsorForm(true);
               } else {
                 setEditingDonation(null);
+                setUseExistingDonor(true);
+                setSelectedExistingDonor('');
                 setShowDonationForm(true);
               }
             }}
@@ -1073,7 +1096,7 @@ const DonorDatabase = () => {
           <div style={modalStyle}>
             <div style={modalHeaderStyle}>
               <h2 style={{ margin: 0, color: '#8B6B45' }}>{isEditingDonation ? 'Edit Donation' : 'Add New Donation'}</h2>
-              <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); }} style={closeButtonStyle}>
+              <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); setUseExistingDonor(true); setSelectedExistingDonor(''); }} style={closeButtonStyle}>
                 <X size={24} color="#666" />
               </button>
             </div>
@@ -1089,6 +1112,46 @@ const DonorDatabase = () => {
                 </div>
               )}
               <div style={formGridStyle}>
+                {!isEditingDonation && (
+                  <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
+                    <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={useExistingDonor}
+                        onChange={(e) => {
+                          setUseExistingDonor(e.target.checked);
+                          if (!e.target.checked) {
+                            setSelectedExistingDonor('');
+                            setMatchedDonorNotice('');
+                          }
+                        }}
+                        style={{ width: 'auto' }}
+                      />
+                      Use existing donor
+                    </label>
+                  </div>
+                )}
+                {!isEditingDonation && useExistingDonor && (
+                  <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
+                    <label style={labelStyle}>Existing Donor</label>
+                    <select
+                      value={selectedExistingDonor}
+                      onChange={(e) => handleExistingDonorSelect(e.target.value)}
+                      style={inputStyle}
+                    >
+                      <option value="">Select donor...</option>
+                      {donorDirectory.map((donor) => {
+                        const key = `${donor.donorName}||${donor.email}`;
+                        const label = donor.email ? `${donor.donorName} — ${donor.email}` : donor.donorName;
+                        return (
+                          <option key={key} value={key}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
                 <div style={formGroupStyle}>
                   <label style={labelStyle}>Donor Name *</label>
                   <input
@@ -1214,7 +1277,7 @@ const DonorDatabase = () => {
                 )}
               </div>
               <div style={formButtonsStyle}>
-                <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); }} style={cancelButtonStyle}>Cancel</button>
+                <button onClick={() => { setShowDonationForm(false); setEditingDonation(null); setUseExistingDonor(true); setSelectedExistingDonor(''); }} style={cancelButtonStyle}>Cancel</button>
                 <button
                   onClick={handleDonationSubmit}
                   style={{ ...submitButtonStyle, opacity: isSavingDonation ? 0.7 : 1, cursor: isSavingDonation ? 'not-allowed' : 'pointer' }}
