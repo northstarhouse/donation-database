@@ -126,7 +126,8 @@ const DonorDatabase = () => {
         'donor',
         'name',
         'donor full name',
-        'full name'
+        'full name',
+        'column 1'
       ]);
       if (direct) return direct;
       const keys = Object.keys(rowMap);
@@ -168,7 +169,14 @@ const DonorDatabase = () => {
       const donorName = findNameValue(rowMap);
       const email = pickFirstValue(rowMap, ['email', 'email address', 'e-mail', 'e mail']);
       const phone = pickFirstValue(rowMap, ['phone number', 'phone', 'phone #', 'telephone', 'mobile']);
-      const address = pickFirstValue(rowMap, ['address', 'mailing address', 'street address', 'address line 1', 'address 1']);
+      const address = pickFirstValue(rowMap, [
+        'address',
+        'mailing address',
+        'street address',
+        'address line 1',
+        'address 1',
+        'full address'
+      ]);
 
       return {
         id: `donation-${year}-${index}`,
