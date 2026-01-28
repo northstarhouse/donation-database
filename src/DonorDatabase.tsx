@@ -1265,8 +1265,8 @@ const DonorDatabase = () => {
                         name="phone"
                         value={donationFormData.phone}
                         onChange={handleDonationChange}
-                        style={isEditingDonation ? disabledInputStyle : inputStyle}
-                        disabled={isEditingDonation}
+                        style={(isEditingDonation || hasExistingDonorProfile) ? disabledInputStyle : inputStyle}
+                        disabled={isEditingDonation || hasExistingDonorProfile}
                       />
                     </div>
                     <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
