@@ -111,6 +111,34 @@ const DonorDatabase = () => {
 
   useEffect(() => {
     const normalizeHeader = (value) => value.toString().trim().toLowerCase().replace(/\s+/g, ' ');
+    const pickFirstValue = (rowMap, keys) => {
+      for (const key of keys) {
+        const value = rowMap[key];
+        if (value !== undefined && value !== null && value.toString().trim() !== '') {
+          return value;
+        }
+      }
+      return '';
+    };
+    const findNameValue = (rowMap) => {
+      const direct = pickFirstValue(rowMap, [
+        'donor name',
+        'donor',
+        'name',
+        'donor full name',
+        'full name'
+      ]);
+      if (direct) return direct;
+      const keys = Object.keys(rowMap);
+      const donorNameKey = keys.find(key =>
+        key.includes('donor') &&
+        key.includes('name') &&
+        !key.includes('last') &&
+        !key.includes('informal')
+      );
+      if (donorNameKey) return rowMap[donorNameKey];
+      return '';
+    };
     const toBoolean = (value) => {
       if (typeof value === 'boolean') return value;
       if (typeof value === 'number') return value !== 0;
@@ -137,12 +165,17 @@ const DonorDatabase = () => {
         rowMap[normalizeHeader(key)] = row[key];
       });
       const amountValue = parseFloat(rowMap['amount']);
+      const donorName = findNameValue(rowMap);
+      const email = pickFirstValue(rowMap, ['email', 'email address', 'e-mail', 'e mail']);
+      const phone = pickFirstValue(rowMap, ['phone number', 'phone', 'phone #', 'telephone', 'mobile']);
+      const address = pickFirstValue(rowMap, ['address', 'mailing address', 'street address', 'address line 1', 'address 1']);
+
       return {
         id: `donation-${year}-${index}`,
         year,
         sheetName,
         rowIndex: index + 2,
-        donorName: rowMap['donor name'] || '',
+        donorName: donorName || '',
         amount: Number.isFinite(amountValue) ? amountValue : 0,
         closeDate: normalizeDate(rowMap['close date']),
         donationType: rowMap['donation type'] || '',
@@ -152,9 +185,9 @@ const DonorDatabase = () => {
         acknowledged: toBoolean(rowMap['acknowledged']),
         acknowledgedDate: normalizeDate(rowMap['acknowledged date']),
         accountType: rowMap['account type'] || '',
-        address: rowMap['address'] || '',
-        email: rowMap['email'] || '',
-        phone: rowMap['phone number'] || rowMap['phone'] || '',
+        address: address || '',
+        email: email || '',
+        phone: phone || '',
         informalName: rowMap['informal names'] || rowMap['informal name'] || '',
         lastName: rowMap['last name'] || '',
         donorNotes: rowMap['donor notes'] || ''
@@ -291,6 +324,8 @@ const DonorDatabase = () => {
     const headers = sheetHeaders[targetSheet] || [];
     const dataMap = {
       'donor name': donationFormData.donorName,
+      'donor': donationFormData.donorName,
+      'name': donationFormData.donorName,
       'amount': donationFormData.amount,
       'close date': donationFormData.closeDate,
       'donation type': donationFormData.donationType,
@@ -302,9 +337,12 @@ const DonorDatabase = () => {
       'acknowledged date': donationFormData.acknowledgedDate,
       'account type': donationFormData.accountType,
       'address': donationFormData.address,
+      'mailing address': donationFormData.address,
       'email': donationFormData.email,
+      'email address': donationFormData.email,
       'phone number': donationFormData.phone,
       'phone': donationFormData.phone,
+      'phone #': donationFormData.phone,
       'informal names': donationFormData.informalName,
       'informal name': donationFormData.informalName,
       'last name': donationFormData.lastName,
