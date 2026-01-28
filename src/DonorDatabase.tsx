@@ -1544,7 +1544,13 @@ const DonorDatabase = () => {
                           <div style={{ fontWeight: '600' }}>
                             ${donation.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                           </div>
-                          <button style={detailEditButtonStyle} onClick={() => startEditDonation(donation)}>
+                          <button
+                            style={detailEditButtonStyle}
+                            onClick={() => {
+                              setSelectedDonor(null);
+                              startEditDonation(donation);
+                            }}
+                          >
                             Edit
                           </button>
                         </div>
