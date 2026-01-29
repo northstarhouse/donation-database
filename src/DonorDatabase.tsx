@@ -1254,8 +1254,8 @@ const DonorDatabase = () => {
                     name="accountType"
                     value={donationFormData.accountType}
                     onChange={handleDonationChange}
-                    style={(isEditingDonation || hasExistingDonorProfile) ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation || hasExistingDonorProfile}
+                    style={!isEditingDonation && hasExistingDonorProfile ? disabledInputStyle : inputStyle}
+                    disabled={!isEditingDonation && hasExistingDonorProfile}
                   >
                     <option value="">Select...</option>
                     {accountTypes.map(type => <option key={type} value={type}>{type}</option>)}
