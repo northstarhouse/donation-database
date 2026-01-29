@@ -738,7 +738,9 @@ const DonorDatabase = () => {
       const nameMatch = normalizeValue(d.donorName) === nameKey;
       if (!nameMatch) return false;
       if (!emailKey) return true;
-      return normalizeValue(d.email) === emailKey;
+      const donationEmail = normalizeValue(d.email);
+      if (!donationEmail) return true;
+      return donationEmail === emailKey;
     });
     const sortedDonations = [...donorDonations].sort((a, b) => {
       if (a.closeDate && b.closeDate) {
