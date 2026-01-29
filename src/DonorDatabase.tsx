@@ -560,7 +560,8 @@ const DonorDatabase = () => {
       originalEmail: donor.email || '',
       address: donor.address || '',
       phone: donor.phone || '',
-      donorNotes: donor.donorNotes || ''
+      donorNotes: donor.donorNotes || '',
+      accountType: donor.accountType || ''
     });
   };
 
@@ -577,7 +578,8 @@ const DonorDatabase = () => {
         updates: {
           address: editingDonor.address,
           phone: editingDonor.phone,
-          donorNotes: editingDonor.donorNotes
+          donorNotes: editingDonor.donorNotes,
+          accountType: editingDonor.accountType
         }
       });
       setDonations(donations.map(d => {
@@ -589,7 +591,8 @@ const DonorDatabase = () => {
           email: editingDonor.email,
           address: editingDonor.address,
           phone: editingDonor.phone,
-          donorNotes: editingDonor.donorNotes
+          donorNotes: editingDonor.donorNotes,
+          accountType: editingDonor.accountType
         };
       }));
       setEditingDonor(null);
@@ -1249,8 +1252,8 @@ const DonorDatabase = () => {
                     name="accountType"
                     value={donationFormData.accountType}
                     onChange={handleDonationChange}
-                    style={isEditingDonation ? disabledInputStyle : inputStyle}
-                    disabled={isEditingDonation}
+                    style={(isEditingDonation || hasExistingDonorProfile) ? disabledInputStyle : inputStyle}
+                    disabled={isEditingDonation || hasExistingDonorProfile}
                   >
                     <option value="">Select...</option>
                     {accountTypes.map(type => <option key={type} value={type}>{type}</option>)}
@@ -1689,6 +1692,17 @@ const DonorDatabase = () => {
                     onChange={(e) => setEditingDonor({ ...editingDonor, phone: e.target.value })}
                     style={inputStyle}
                   />
+                </div>
+                <div style={formGroupStyle}>
+                  <label style={labelStyle}>Account Type</label>
+                  <select
+                    value={editingDonor.accountType}
+                    onChange={(e) => setEditingDonor({ ...editingDonor, accountType: e.target.value })}
+                    style={inputStyle}
+                  >
+                    <option value="">Select...</option>
+                    {accountTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                  </select>
                 </div>
                 <div style={{ ...formGroupStyle, gridColumn: '1 / -1' }}>
                   <label style={labelStyle}>Donor Notes</label>
